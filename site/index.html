@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1412">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Võ Lâm Idle">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="Trải nghiệm Võ Lâm Idle, game kiếm hiệp nhàn rỗi với 10 đại môn phái, luyện kỹ năng, săn trang bị và khám phá giang hồ. Chơi ngay hôm nay trên trình duyệt!">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://volam.vinarpg.com/">
+<link rel="alternate" hreflang="vi-VN" href="https://volam.vinarpg.com/">
+<link rel="alternate" hreflang="x-default" href="https://volam.vinarpg.com/">
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="preload" as="image" href="fx/st_0.webp">
+<link rel="preload" as="image" href="fx/st_1.webp">
+<link rel="manifest" href="manifest.json">
+<title>Võ Lâm Idle – Game Kiếm Hiệp Nhàn Rỗi Treo Máy Offline</title>
+<meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="Võ Lâm Idle">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Võ Lâm Idle – Game Kiếm Hiệp Nhàn Rỗi">
+<meta property="og:description" content="Luyện kỹ năng, săn trang bị và khám phá giang hồ cùng 10 đại môn phái trong Võ Lâm Idle. Chơi ngay trên trình duyệt!">
+<meta property="og:url" content="https://volam.vinarpg.com/">
+<meta property="og:image" content="https://volam.vinarpg.com/android-chrome-512x512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Logo Võ Lâm Idle với hiệp khách đội nón lá theo phong cách mực họa">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Võ Lâm Idle – Game Kiếm Hiệp Nhàn Rỗi">
+<meta name="twitter:description" content="Luyện kỹ năng, săn trang bị và khám phá giang hồ cùng 10 đại môn phái trong Võ Lâm Idle. Chơi ngay trên trình duyệt!">
+<meta name="twitter:image" content="https://volam.vinarpg.com/android-chrome-512x512.png">
+<meta name="twitter:image:alt" content="Logo Võ Lâm Idle với hiệp khách đội nón lá theo phong cách mực họa">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Võ Lâm Idle",
+  "url": "https://volam.vinarpg.com/",
+  "description": "Game kiếm hiệp nhàn rỗi với 10 đại môn phái, luyện kỹ năng, săn trang bị và khám phá giang hồ.",
+  "inLanguage": "vi-VN"
+}
+</script>
+<link rel="stylesheet" href="fonts/ibm-plex-mono.css?v=20261003-v131">
+<link rel="stylesheet" href="style.css?v=20261004-v218">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+      <div class="lvbox"><span id="lv">1</span></div>
+      <div class="topmid">
+        <div class="row"><b id="heroName">Võ Lâm Idle</b><span id="stageLbl"></span></div>
+        <div id="hud" class="status-frame">
+          <div class="bar xp"><i id="xpBar"></i><span class="bar-label">EXP</span><span id="xpTxt"></span></div>
+          <div class="bar hp"><i id="hpBar"></i><span class="bar-label">HP</span><span id="hpTxt"></span></div>
+          <div class="bar mp"><i id="mpBar"></i><span class="bar-label">MP</span><span id="mpTxt"></span></div>
+        </div>
+      </div>
+    <div class="gold"><img class="coin" src="ui/yuanbao.png" alt="" aria-hidden="true"><span id="gold">0</span></div>
+    <button id="giftBtn" title="Phần thưởng">🎁</button>
+    <button id="compactBtn" title="Thu gọn / mở rộng sân đấu">⛶</button>
+  </header>
+
+  <section id="battle">
+    <div id="bg"></div>
+    <canvas id="arena"></canvas>
+    <div id="miniFloat" aria-label="Bản đồ phóng to"><canvas id="miniCanvas"></canvas></div>
+    <div id="mainSk"></div>
+    <div id="autoControls" role="group" aria-label="Điều khiển tự động">
+      <button id="appUpdateBtn" class="app-update hidden" type="button" aria-label="Cập nhật phiên bản">Cập nhật</button>
+      <button id="autoSettingsBtn" type="button" aria-label="Cài đặt Auto" title="Cài đặt Auto">
+        <img src="ui/wrench.svg?v=20261004-v164" alt="" aria-hidden="true">
+      </button>
+      <button id="ctrlBtn" class="chip autotoggle" role="switch" aria-label="Auto" aria-checked="true"
+        title="Bật: tự đánh và đi nhặt đồ khớp bộ lọc. Ngừng điều khiển tay thì Auto tiếp tục. Tắt: bấm ô kỹ năng để đánh thủ công. Phím F bật/tắt Auto.">
+        <span>Auto</span><span class="ios-switch" aria-hidden="true"><i></i></span>
+      </button>
+    </div>
+    <button id="inBtn" class="chip"></button>
+    <div id="svHud" class="hidden">
+      <div id="svTopBar">
+        <span id="svGoldWrap">💰 <b id="svGold">0</b></span>
+        <button id="svPauseBtn" class="chip">⏸</button>
+      </div>
+      <div id="svPad">
+        <button id="svUlt" class="pbtn ult"><div class="cd"></div><span class="lbl">Tuyệt kỹ</span><small class="lock"></small></button>
+        <button id="svBomb" class="pbtn bomb"><span class="lbl">💣 <b id="svBombCnt">0</b></span></button>
+      <button id="svHpBtn" class="pbtn pot hp"><div class="cd"></div><span>HP</span></button>
+      </div>
+    </div>
+    <div id="svBar" class="hidden"></div>
+    <div id="townBar" class="hidden"><b id="townName"></b><button class="btn sm" id="bShop">Cửa hàng</button><button class="btn sm" id="bStashT">Kho chung</button><button class="btn sm" id="bSellTown">Bán đồ</button><button class="btn sm on" id="bBack">Trở lại ải</button></div>
+    <div id="pad">
+      <button class="pbtn sk" data-i="0"><i></i><b>1</b></button>
+      <button class="pbtn sk" data-i="1"><i></i><b>2</b></button>
+      <button class="pbtn sk" data-i="2"><i></i><b>3</b></button>
+      <button class="pbtn sk" data-i="3"><i></i><b>4</b></button>
+      <button class="pbtn pot hp" id="bHp"><img class="potion-icon" alt="" draggable="false"><div class="cd"></div><b class="potion-count" hidden></b><span>HP</span></button>
+      <button class="pbtn pot mp" id="bMp"><img class="potion-icon" alt="" draggable="false"><div class="cd"></div><b class="potion-count" hidden></b><span>MP</span></button>
+      <button class="pbtn pot tp" id="bTp"><div class="cd"></div><span>Về<br>thành</span></button>
+    </div>
+  </section>
+
+  <main id="panel">
+    <div class="tab" id="t-log"></div>
+    <div class="tab hidden" id="t-char"></div>
+    <div class="tab hidden" id="t-skill"></div>
+    <div class="tab hidden" id="t-inv"></div>
+    <div class="tab hidden" id="t-more"></div>
+  </main>
+
+  <nav id="tabs">
+    <button data-t="log" class="on" title="Giang hồ (H)" aria-keyshortcuts="H">Giang hồ</button>
+    <button data-t="char">Nhân vật<em class="dot" id="dotChar"></em></button>
+    <button data-t="skill">Võ công<em class="dot" id="dotSkill"></em></button>
+    <button data-t="inv">Hành trang</button>
+    <button data-t="more">Khác</button>
+  </nav>
+
+  <div id="modal" class="hidden" role="dialog" aria-modal="true"><div class="mbox" tabindex="-1"><button class="mx" id="mClose">✕</button><div id="mBody"></div></div></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+<script src="data.js?v=20261004-v133"></script>
+<script src="js/set-audit.js?v=20261003-v131"></script>
+<script src="world.js?v=20261004-v140"></script>
+<script src="sound.js?v=20261003-v131"></script>
+<script src="fx.js?v=20261003-v131"></script>
+<script src="jmo.js?v=20261003-v131"></script>
+<script src="locales/vi.js?v=20261004-v132"></script>
+<script src="js/core.js?v=20261004-v180"></script>
+<script src="js/mapobs.js?v=20261003-v131"></script>
+<script src="js/stats.js?v=20261004-v138"></script>
+<script src="js/loot.js?v=20261004-v181"></script>
+<script src="rdata.js?v=20261003-v131"></script>
+<script src="js/sets.js?v=20261004-v161"></script>
+<script src="js/recipes.js?v=20261004-v178"></script>
+<script src="js/enemy-balance.js?v=20261004-v149"></script>
+<script src="js/field-spawn.js?v=20261003-v131"></script>
+<script src="js/combat.js?v=20261004-v162"></script>
+<script src="js/skillsys.js?v=20261004-v208"></script>
+<script src="js/save.js?v=20261004-v179"></script>
+<script src="js/render.js?v=20261004-v154"></script>
+<script src="js/look.js?v=20261004-v8"></script>
+<script src="jxlook.js?v=20261004-v1"></script>
+<script src="js/jxparts.js?v=20261004-v1"></script>
+<script src="js/audio.js?v=20261004-v162"></script>
+<script src="js/ui.js?v=20261004-v206"></script>
+<script src="js/control.js?v=20261004-v192"></script>
+<script src="js/shop.js?v=20261004-v193"></script>
+<script src="js/rewards.js?v=20261004-v168"></script>
+<script src="js/activities.js?v=20261003-v131"></script>
+<script src="js/depth.js?v=20261004-v178"></script>
+<script src="js/builds.js?v=20261003-v131"></script>
+<script src="js/journal.js?v=20261004-v133"></script>
+<script src="js/forge.js?v=20261004-v178"></script>
+<script src="js/auto.js?v=20261004-v178"></script>
+<script src="js/admin.js?v=20261003-v131"></script>
+<script src="js/guide.js?v=20261004-v181"></script>
+<script src="js/stash.js?v=20261004-v193"></script>
+<script src="js/survival.js?v=20261004-v140"></script>
+<script src="js/main.js?v=20261004-v160"></script>
+</body>
+</html>

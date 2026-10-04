@@ -1,0 +1,24 @@
+{
+  "id": "./",
+  "name": "Võ Lâm Idle",
+  "short_name": "Võ Lâm Idle",
+  "description": "Game kiếm hiệp nhàn rỗi Võ Lâm Idle.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1412",
+  "theme_color": "#0e1412",
+  "icons": [
+    {
+      "src": "./android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
