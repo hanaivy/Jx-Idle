@@ -40,7 +40,7 @@ function makeSetItem(kind, row, luck) {
 }
 /* Roi do bo: chu yeu tu trum; uu tien bo cua mon phai nhan vat (requiremenpai), yeu cau cap khong qua xa cap nhan vat */
 function rollSetDrop(e) {
-  const chance = e.cls === 'boss' ? 0.40 : e.cls === 'elite' ? 0.10 : 0.01;
+  const chance = e.cls === 'boss' ? 0.25 : e.cls === 'elite' ? 0.06 : 0.005;
   if (Math.random() >= chance) return null;
   const kind = e.L >= 70 && Math.random() < 0.35 ? 'platina' : 'gold';
   const lvCap = Math.max(S.lvl, e.L) + 20, fid = FAC[S.fac] ? FAC[S.fac].id : -1;

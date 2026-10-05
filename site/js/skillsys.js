@@ -123,6 +123,7 @@ function skillSysTick(dt) {
       } else if (duration > 0 && R.mana >= cost + R.P.mana * 0.15) {
         R.mana -= cost; timers[id] = now + duration; R.dirty = true;
         addText(H.x, H.y - 58, '✦ ' + s.n, '#ffe48a', 12);
+        if (typeof castFx === 'function') castFx({ id: +id });
       }
     } else if (kind === 'curse' && S.autoCurse !== false && fight && R.mana >= cost + R.P.mana * 0.15) {
       const targets = R.enemies.filter(e => !e.dead && e.hp > 0 && !(e.curse && e.curse[id] > now)).sort((a, b) => (b.cls === 'boss') - (a.cls === 'boss') || (b.cls === 'elite') - (a.cls === 'elite') || Math.hypot(a.x - H.x, a.y - H.y) - Math.hypot(b.x - H.x, b.y - H.y));

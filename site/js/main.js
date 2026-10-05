@@ -6,10 +6,10 @@ const UI_KEY = 'jxidle_ui', UI_FS = [0.9, 1, 1.15, 1.3], UI_FS_NAME = ['Nhỏ', 
 let UIP = null;
 function uiPrefs() {
   if (!UIP) { try { UIP = JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch (e) { UIP = {}; } }
-  UIP.fs = Number.isInteger(UIP.fs) && UIP.fs >= 0 && UIP.fs < UI_FS.length ? UIP.fs : 1; UIP.saver = !!UIP.saver; UIP.compact = !!UIP.compact;
+  UIP.fs = Number.isInteger(UIP.fs) && UIP.fs >= 0 && UIP.fs < UI_FS.length ? UIP.fs : 1; UIP.saver = !!UIP.saver; UIP.compact = !!UIP.compact; UIP.invBorderGlow = !!UIP.invBorderGlow;
   return UIP;
 }
-function applyUiPrefs() { const p = uiPrefs(); document.documentElement.style.setProperty('--fs', UI_FS[p.fs]); document.body.classList.toggle('saver', p.saver); document.body.classList.toggle('compact', p.compact); }
+function applyUiPrefs() { const p = uiPrefs(); document.documentElement.style.setProperty('--fs', UI_FS[p.fs]); document.body.classList.toggle('saver', p.saver); document.body.classList.toggle('compact', p.compact); document.body.classList.toggle('inv-border-glow', p.invBorderGlow); }
 function setUiPref(o) { Object.assign(uiPrefs(), o); try { localStorage.setItem(UI_KEY, JSON.stringify(UIP)); } catch (e) { /* che do rieng tu */ } applyUiPrefs(); fitApp(); }
 function onZoneChange(z) { obsLoad(z.id); [H.x, H.y] = inWorld(H.x, H.y); for (const e of R.enemies) [e.x, e.y] = inWorld(e.x, e.y); for (const d of R.ground) [d.x, d.y] = inWorld(d.x, d.y); snapCamera(); R.bgImg = z.bg ? img(z.bg) : null; playMusic(z.id); preloadZoneSounds(z); if (curTab === 'log') refresh(); }
 function onStageChange() { if (curTab === 'log') refresh(); }
@@ -107,12 +107,30 @@ function setCompact(on) { setUiPref({ compact: on }); if (!on && S.fac) refresh(
 function setupServiceWorkerUpdates() {
   if (!('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return;
   const button = $('#appUpdateBtn'); if (!button) return;
-  let registration = null, reloadAfterUpdate = false, didReload = false;
-  const showUpdate = () => { button.disabled = false; button.classList.remove('hidden'); };
+  let registration = null, reloadAfterUpdate = false, didReload = false, updateRequested = false;
+  const watchedWorkers = new WeakSet();
+  const showUpdate = () => { button.disabled = false; button.textContent = 'Cập nhật'; button.classList.remove('hidden'); };
+  const activateWaiting = () => {
+    const waiting = registration && registration.waiting;
+    if (!waiting) return false;
+    updateRequested = false;
+    button.disabled = true; button.textContent = 'Đang cập nhật…';
+    if (S && S.fac) save();
+    reloadAfterUpdate = true;
+    waiting.postMessage({ type: 'SKIP_WAITING' });
+    return true;
+  };
   const watchWorker = (reg, worker) => {
-    if (!worker) return;
+    if (!worker || watchedWorkers.has(worker)) return;
+    watchedWorkers.add(worker);
     worker.addEventListener('statechange', () => {
-      if (worker.state === 'installed' && (navigator.serviceWorker.controller || reg.waiting)) showUpdate();
+      if (worker.state === 'installed' && (navigator.serviceWorker.controller || reg.waiting)) {
+        if (updateRequested && reg.waiting) activateWaiting();
+        else showUpdate();
+      } else if (worker.state === 'redundant' && updateRequested) {
+        updateRequested = false;
+        button.disabled = false; button.textContent = 'Thử lại'; button.classList.remove('hidden');
+      }
     });
   };
   const watchRegistration = reg => {
@@ -121,12 +139,20 @@ function setupServiceWorkerUpdates() {
     reg.addEventListener('updatefound', () => watchWorker(reg, reg.installing));
   };
   button.onclick = () => {
-    const waiting = registration && registration.waiting;
-    if (!waiting) { button.classList.add('hidden'); if (registration) registration.update().catch(() => {}); return; }
-    button.disabled = true; button.textContent = 'Đang cập nhật…';
-    if (S && S.fac) save();
-    reloadAfterUpdate = true;
-    waiting.postMessage({ type: 'SKIP_WAITING' });
+    if (!registration) return;
+    if (activateWaiting()) return;
+    updateRequested = true;
+    button.disabled = true; button.textContent = 'Đang kiểm tra…';
+    registration.update().then(() => {
+      if (activateWaiting()) return;
+      if (registration.installing) { watchWorker(registration, registration.installing); return; }
+      updateRequested = false;
+      button.disabled = false; button.textContent = 'Đã mới nhất';
+      setTimeout(() => button.classList.add('hidden'), 1400);
+    }).catch(() => {
+      updateRequested = false;
+      button.disabled = false; button.textContent = 'Thử lại';
+    });
   };
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!reloadAfterUpdate || didReload) return;

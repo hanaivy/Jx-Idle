@@ -21,13 +21,16 @@ function toggleRide() {
   toast(S.ride ? 'Đã lên ngựa' : 'Đã xuống ngựa');
 }
 function refreshInputBtn() {
-  const on = isDesktopLandscape(); document.body.classList.toggle('deskland', on);
+  const on = isDesktopLandscape(), mouse = mouseMode();
+  document.body.classList.toggle('deskland', on);
+  document.body.classList.toggle('mouse-input', mouse);
   const b = $('#inBtn'); if (b) {
-    const mouse = mouseMode(), label = mouse ? 'Chuột' : 'Joystick';
+    const label = mouse ? 'Chuột' : 'Joystick';
     b.innerHTML = `<img class="input-mode-icon" src="ui/input-${mouse ? 'mouse' : 'joystick'}.svg" alt=""><span>${label}</span>`;
     b.setAttribute('aria-label', `Đổi chế độ điều khiển · hiện tại: ${label}`);
     b.title = `Đổi chế độ điều khiển · hiện tại: ${label}`;
   }
+  if (typeof window.positionWorldChatModeButton === 'function') window.positionWorldChatModeButton();
 }
 const joyAnchor = () => ({ x: JOY_R + 14, y: AR.h - JOY_R - 14 });   // goc trai duoi san dau
 
@@ -208,7 +211,7 @@ function bindControls() {
     if (INPUT.mouse) { const [wx, wy] = inWorld(x + CAM.x, y + CAM.y); INPUT.target = { x: wx, y: wy }; return; }   // giu chuot: di theo con tro
     // QA-029/QA-016: keo o BAT KY dau tren san deu dieu khien duoc (joystick ao neo tai diem cham).
     // Truoc day keo ngoai vung joystick co dinh bi bo qua -> nguoi choi tuong game khong nghe minh.
-    if (!INPUT.moved && Math.hypot(x - INPUT.ox, y - INPUT.oy) > TAP_MOVE) { INPUT.moved = true; INPUT.target = null; if (!manual()) setCtrl('manual'); }
+    if (!INPUT.moved && Math.hypot(x - INPUT.ox, y - INPUT.oy) > TAP_MOVE) { INPUT.moved = true; INPUT.target = null; if (typeof window.hideWorldChatFrameForJoystick === 'function') window.hideWorldChatFrameForJoystick(); if (!manual()) setCtrl('manual'); }
   });
   const up = ev => {
     if (typeof minimapPointerUp === 'function' && minimapPointerUp(ev.pointerId)) return;

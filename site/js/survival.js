@@ -632,7 +632,7 @@ function svDraw(dt) {
   }
   for (const s of SV.shots) if (!(s.m && s.m.fly && drawFxSprite(s.m.fly, s.dir, s.t, s.x, s.y, true, s.scale))) { c.fillStyle = ELEM_COL.phys; c.beginPath(); c.arc(s.x, s.y, 4, 0, 7); c.fill(); }
   R.fx = R.fx.filter(f => { if (f.k === 'ring') { f.life -= dt; c.globalAlpha = clamp(f.life / f.max, 0, 1); c.strokeStyle = f.color; c.lineWidth = 3; c.beginPath(); c.arc(f.x, f.y - 10, 30 + (1 - f.life / f.max) * 150, 0, 7); c.stroke(); c.globalAlpha = 1; return f.life > 0; }
-    if (f.k !== 'mis' && f.k !== 'boom') return false; const ok = stepFx(f, dt); if (ok) drawFx(f); return ok; });
+    if (f.k !== 'mis' && f.k !== 'boom' && f.k !== 'orbit' && f.k !== 'drop') return false; const ok = stepFx(f, dt); if (ok) drawFx(f); return ok; });
   c.textAlign = 'center';
   flushLabels();
   for (const t of R.txt) { t.life -= dt; t.y -= 32 * dt; c.globalAlpha = clamp(t.life / 0.5, 0, 1); c.font = `${t.size}px "IBM Plex Mono", monospace`; c.fillStyle = '#000'; c.fillText(t.t, t.x + 1, t.y + 1); c.fillStyle = t.color; c.fillText(t.t, t.x, t.y); }

@@ -39,13 +39,84 @@ button[disabled]{opacity:.4;cursor:default}
 .bar.mp .bar-label{color:#b7dcff;border-color:#547fb4;background:linear-gradient(180deg,#1e2b3a,#0d141e);box-shadow:inset 0 0 3px #5fa6ff55,0 0 2px #000}
 
 #battle{position:relative;flex:0 0 46%;overflow:hidden;background:#1a211b}
+#worldChat{position:absolute;left:10px;right:168px;bottom:10px;z-index:4;pointer-events:none}
+#worldChat.wc-emoji-active{z-index:4}
+.wc-toggle{position:relative;left:104px;pointer-events:auto;width:32px;height:32px;border:1px solid #b99a5c;border-radius:50%;background:#000a;box-shadow:0 3px 9px #000b,inset 0 1px #ffffff25;font-size:16px;line-height:1}
+.wc-toggle:active{transform:scale(.96)}
+.wc-unread{position:absolute;top:-4px;right:-5px;min-width:16px;height:16px;padding:0 3px;border:1px solid #ffd4a0;border-radius:10px;background:#bc3a29;color:#fff;font-size:9px;font-weight:700;line-height:14px;text-align:center}
+.wc-panel{position:absolute;left:0;bottom:86px;pointer-events:auto;width:min(430px,100%);height:min(420px,calc(100% - 64px));min-height:232px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #d5c08b66;border-radius:5px;background:linear-gradient(180deg,#07100a35,#03090552);-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px);box-shadow:0 4px 14px #0004;transition:background .4s ease,border-color .4s ease,box-shadow .4s ease,backdrop-filter .4s ease}
+@media (orientation:portrait) and (min-height:800px){.wc-panel:not(.wc-maximized){bottom:132px}}
+.wc-panel[hidden]{display:none}
+.wc-panel.wc-idle{border-color:transparent;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.wc-topline{position:relative;z-index:2;display:flex;flex:none;align-items:center;justify-content:space-between;gap:5px;min-height:25px;padding:2px 5px 0;text-shadow:0 1px 3px #000;font-size:9px}
+.wc-topline,.wc-form{transition:opacity .4s ease,visibility 0s linear}
+.wc-panel.wc-idle .wc-topline,.wc-panel.wc-idle .wc-form{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s ease,visibility 0s linear .4s}
+.wc-panel.wc-idle .wc-list,.wc-panel.wc-idle .wc-system-list{scrollbar-width:none}
+.wc-panel.wc-idle .wc-list::-webkit-scrollbar,.wc-panel.wc-idle .wc-system-list::-webkit-scrollbar{display:none}
+.wc-header-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0;font-size:8px;line-height:20px}
+.wc-online{color:#8de98c}
+.wc-status{color:#f1d06e}
+.wc-status[data-state="ok"]{color:#8de98c}
+.wc-status[data-state="error"]{color:#ff9c8b}
+.wc-status[data-state="wait"]{color:#e1c477}
+.wc-maximize{pointer-events:auto;flex:none;width:20px;height:20px;border:1px solid #d5c08b88;border-radius:4px;background:#07100a66;color:#fff7dc;font-size:13px;line-height:1;transition:background .4s ease,border-color .4s ease}
+.wc-maximize:hover{background:#07100a99;border-color:#e6c67a}
+.wc-idle .wc-form{border-top-color:transparent;background:transparent}
+.wc-idle .wc-input,.wc-idle .wc-input:focus{border-color:transparent;background:transparent;box-shadow:none}
+.wc-idle .wc-send,.wc-idle .wc-maximize{border-color:transparent;background:transparent;box-shadow:none}
+.wc-panel.wc-maximized{position:absolute;z-index:100;top:40px;right:auto;bottom:86px;left:0;width:min(430px,100%);height:auto;min-height:0;transform:none;border-color:#d5c08b99;border-radius:5px;background:rgba(3,8,6,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 4px 18px #0009}
+.wc-panel.wc-maximized .wc-topline{min-height:44px;padding:4px 5px}
+.wc-panel.wc-maximized .wc-header-right .wc-online,.wc-panel.wc-maximized .wc-header-right .wc-status{display:none}
+.wc-panel.wc-maximized .wc-maximize{position:absolute;top:5px;right:5px;z-index:3;width:36px;height:36px;border:2px solid #e6c67a;border-radius:50%;background:#07100acc;box-shadow:0 2px 9px #000c;font-size:26px;line-height:1}
+.wc-panel.wc-maximized.wc-idle .wc-topline{opacity:1;visibility:visible;pointer-events:none;transition:none}
+.wc-panel.wc-maximized.wc-idle .wc-tabs,.wc-panel.wc-maximized.wc-idle .wc-header-right{visibility:hidden}
+.wc-panel.wc-maximized.wc-idle .wc-maximize{opacity:1;visibility:visible;pointer-events:auto}
+#worldChat.wc-maximized{top:0;bottom:10px}
+#worldChat.wc-maximized .wc-toggle{position:absolute;left:104px;bottom:0}
+#worldChat.wc-maximized::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:rgba(3,8,6,.56);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.wc-list,.wc-system-list{flex:1;min-height:0;overflow:auto;padding:3px 7px 5px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#81907855 transparent;text-shadow:0 1px 3px #000,0 0 2px #000;user-select:none;-webkit-user-select:none}
+.wc-list[hidden],.wc-system-list[hidden]{display:none}
+.wc-line{font-size:clamp(10px,2.7vw,12px);line-height:1.5;color:#f1f0d7;overflow-wrap:anywhere}
+.wc-time{color:#ddd9c2}
+.wc-name{color:#9ff18a;font-weight:700}
+.wc-faction{color:#a8edb2}
+.wc-level{color:#d6f2b6}
+.wc-message-text{color:#f5f2db}
+.wc-system-list{color:#f1f0d7;font-size:11px;line-height:1.45}
+.wc-system-list>div{padding:1px 0}
+.wc-form{flex:none;padding:4px 6px;background:#07100a20;border-top:1px solid #e0d5a633;transition:background .4s ease,border-color .4s ease}
+.wc-compose{display:flex;gap:5px}
+.wc-emoji-toggle{display:grid;flex:none;width:27px;height:27px;min-height:0;place-items:center;padding:0;border:1px solid #d5c68c77;border-radius:3px;background:#fff1c20c;color:#fff1c5}
+.wc-emoji-toggle img{display:block;width:17px;height:17px;object-fit:contain}
+.wc-emoji-toggle:hover{border-color:#f0d286aa;background:#f0d28618}
+.wc-emoji-picker{position:absolute;right:6px;bottom:43px;left:auto;z-index:9999;display:flex;flex-direction:column;width:min(320px,calc(100% - 12px));height:min(250px,calc(100% - 54px));min-height:90px;overflow:hidden;border:1px solid #d5c08b99;border-radius:5px;background:rgba(7,13,10,.97);box-shadow:0 5px 18px #000b;color:#f3ead3}
+.wc-emoji-picker[hidden]{display:none}
+.wc-panel.wc-emoji-open:not(.wc-maximized){min-height:min(300px,calc(100dvh - 80px))}
+.wc-emoji-toolbar{display:flex;flex:none;align-items:center;justify-content:space-between;height:27px;padding:0 6px;border-bottom:1px solid #d5c08b55;color:#ffe894;font-size:10px}
+.wc-emoji-close{width:21px;height:21px;min-height:0;padding:0;border:1px solid #d5c08b66;border-radius:50%;color:#fff2c8;font-size:15px;line-height:1}
+.wc-emoji-grid{display:grid;flex:1;min-height:0;grid-template-columns:repeat(auto-fill,minmax(29px,1fr));align-content:start;gap:2px;overflow:auto;padding:4px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#81907866 transparent}
+.wc-emoji-item{width:100%;height:29px;min-height:0;padding:0;border:1px solid transparent;border-radius:3px;background:transparent;font:19px/1 system-ui,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.wc-emoji-item:hover,.wc-emoji-item:focus-visible{border-color:#d5c08b88;background:#d5c08b22;outline:none}
+.wc-input{min-width:0;flex:1;height:27px;padding:0 7px;border:1px solid #e0d6ad55;border-radius:3px;background:rgba(0,0,0,.05);color:#f3ead3;font:11px var(--font);box-shadow:none;transition:background .4s ease,border-color .4s ease,box-shadow .4s ease;user-select:text;-webkit-user-select:text}
+.wc-input::placeholder{color:#e1ddce99}
+.wc-input:focus{outline:none;border-color:#e0d39499;background:rgba(0,0,0,.05);box-shadow:0 0 0 1px #e0d39422}
+.wc-send{flex:none;height:27px;min-height:0;padding:0 9px;border:1px solid #d5c68c77;border-radius:3px;background:#fff1c20c;color:#fff1c5;font-size:10px;line-height:1;transition:background .4s ease,border-color .4s ease}
+.wc-send:hover:not(:disabled){border-color:#f0d286aa;background:#f0d28618;color:#fff5d0}
+.wc-send:focus-visible{outline:1px solid #e0d39488;outline-offset:1px}
+.wc-send:disabled{opacity:.5}
+.wc-line.wc-pending{opacity:.78}
+.wc-delivery{color:#f0b88e;font-size:.9em}
+.wc-tabs{position:static;display:flex;flex:none;gap:5px;padding:0;background:none;border:0}
+.wc-tab{flex:none;min-height:18px;padding:1px 3px;border:0;border-bottom:1px solid transparent;border-radius:0;color:#7fe1d2;font-size:8px;line-height:1.3;text-shadow:0 1px 2px #000}
+.wc-tab.active{border-color:#d9bd6e99;background:none;color:#ffe894;font-weight:700}
+.wc-tab:active{background:#88732d99}
 #miniFloat{display:none;position:absolute;z-index:9;touch-action:none;cursor:grab}
 #miniFloat.open{display:block}
 #miniFloat:active{cursor:grabbing}
 #miniCanvas{display:block}
 #bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.85) brightness(.8);transition:background-image .6s}
 #battle::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at 50% 55%,transparent 45%,#0009 100%)}
-#arena{position:absolute;inset:0;width:100%;height:100%}
+#arena{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .enh{color:#7fe3ff;font-size:.85em;text-shadow:0 0 4px #2aa8ff}
 /* Luyen Cong (survival.js) */
 #svHud{pointer-events:none}
@@ -100,6 +171,8 @@ body.sv #battle{flex:1 1 auto}
 #skBuffs .sti{display:flex;flex-direction:column;align-items:center;min-width:26px;padding:1px 2px;border-radius:3px;background:#0009;text-align:center}
 #skBuffs .sti img{display:block;width:20px;height:20px;object-fit:contain;image-rendering:pixelated}
 #skBuffs .sti b{color:#62ff72;font:700 9px/11px var(--font);text-shadow:0 1px 2px #000}
+/* Keep active buffs below the two-row training skill bar. */
+body.sv #skBuffs{top:116px;left:8px;right:8px;z-index:3;flex-wrap:wrap;align-content:flex-start}
 
 #panel{flex:1;min-height:0;overflow:hidden;background:var(--panel);border-top:1px solid var(--gold2)}
 .ios-switch-row{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px;cursor:pointer}
@@ -208,6 +281,11 @@ input:not([type="checkbox"]):not([type="range"]):not([type="file"]):hover:not(:d
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):focus,select:focus,textarea:focus{border-color:var(--gold2);box-shadow:0 0 0 2px #e6c67a24,inset 0 1px 3px #0008;outline:none}
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):disabled,select:disabled,textarea:disabled{border-color:#354139;background:#151b18;color:#7d887f;box-shadow:none;opacity:.62;cursor:not-allowed}
+#worldChat .wc-input{min-height:0;padding:0 7px;border:1px solid #e0d6ad55;border-radius:3px;background:rgba(0,0,0,.05);color:#f3ead3;font:11px var(--font);box-shadow:none;transition:background .4s ease,border-color .4s ease,box-shadow .4s ease}
+#worldChat .wc-input:hover:not(:disabled){border-color:#e0d6ad55}
+#worldChat .wc-input:focus,#worldChat .wc-input:focus-visible{border-color:#e0d6ad55;background:rgba(0,0,0,.05);box-shadow:none;outline:none}
+#worldChat .wc-panel.wc-idle .wc-input,#worldChat .wc-panel.wc-idle .wc-input:focus,#worldChat .wc-panel.wc-idle .wc-input:focus-visible{border-color:transparent;background:transparent;box-shadow:none;outline:none}
+#worldChat button:focus-visible{outline:none;box-shadow:none}
 input::placeholder,textarea::placeholder{color:#879389;opacity:1}
 select{appearance:none;-webkit-appearance:none;width:100%;padding-right:32px;background-color:#101713;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23e6c67a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),linear-gradient(180deg,#18211d 0%,#101713 100%);background-repeat:no-repeat;background-position:right 10px center,center;background-size:14px 14px,100% 100%;cursor:pointer}
 select option{background:#111915;color:var(--text)}
@@ -280,6 +358,15 @@ input[type="range"]::-moz-range-thumb{width:15px;height:15px;border:2px solid #f
 @media(prefers-reduced-motion:reduce){.it.magicitem::after,.idet .pic.magicitem::after{animation:none}}
 .it.bad{filter:grayscale(.8)} .it.bad i{color:#f66}
 
+/* Vien chay trong hanh trang mac dinh tat; co the bat cho Hoang Kim / Bach Kim trong tuy chon giao dien. */
+.it.goldset::after,.it.platinaset::after,.it.magicitem::after{display:none;animation:none}
+body.inv-border-glow #t-inv .it.goldset::after{display:block;animation:goldset-sweep 3.2s linear infinite}
+body.inv-border-glow #t-inv .it.platinaset::after{display:block;animation:platinaset-sweep 3.2s linear infinite}
+.eqgrid .it.goldset::after{display:block;animation:goldset-sweep 3.2s linear infinite}
+.eqgrid .it.platinaset::after{display:block;animation:platinaset-sweep 3.2s linear infinite}
+.eqgrid .it.magicitem::after{display:block;animation:magicitem-sweep 7s linear infinite}
+@media(prefers-reduced-motion:reduce){body.inv-border-glow #t-inv .it.goldset::after,body.inv-border-glow #t-inv .it.platinaset::after,.eqgrid .it.goldset::after,.eqgrid .it.platinaset::after,.eqgrid .it.magicitem::after{animation:none}}
+
 .skl{display:grid;grid-template-columns:40px 1fr auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);margin-bottom:5px}
 .skl.lock{opacity:.5} .skl.main{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
 .skl .sic{width:40px;height:40px;border-radius:5px;border:1px solid var(--line2)}
@@ -330,6 +417,9 @@ input[type="range"]::-moz-range-thumb{width:15px;height:15px;border:2px solid #f
 .shoprow{display:grid;grid-template-columns:36px 1fr auto;gap:8px;align-items:center;text-align:left;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel2)}
 .shoprow img{width:36px;height:36px;object-fit:contain} .shoprow small{display:block;color:var(--dim);font-size:11px} .shoprow em{font-style:normal;color:var(--gold);font-size:12px}
 .shoprow.bad{opacity:.55} .shoprow.own{border-color:var(--gold2)}
+.shop-potion-bulk{min-height:40px;margin:6px 0;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel2)}
+.shop-potion-bulk>span:first-of-type{display:flex;flex-direction:column;gap:1px;font-size:12px;line-height:1.25}
+.shop-potion-bulk small{color:var(--dim);font-size:10px}
 .chips{display:flex;flex-wrap:wrap;gap:4px} .chip2{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border:1px solid var(--line2);border-radius:12px;font-size:12px;background:#0b100e}
 /* dieu khien: nut che do, o ky nang, thuoc, the do dia phu */
 .chip{position:absolute;right:8px;top:34px;z-index:4;font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid var(--gold2);background:#000a;color:var(--gold)}
@@ -367,7 +457,7 @@ input[type="range"]::-moz-range-thumb{width:15px;height:15px;border:2px solid #f
 .skl .slots button.on{border-color:var(--gold);color:var(--gold)}
 
 /* Hop thoai dung nen toi va vien gon; bo khung anh co hoa van JX de noi dung de doc hon. */
-.mbox{border:1px solid var(--line2);border-radius:12px;background-color:var(--panel);background-image:linear-gradient(135deg,rgba(21,29,26,.82),rgba(12,18,16,.88)),url('ui/modal-jade-texture.webp');background-size:cover;background-position:center;box-shadow:0 16px 48px #000a,inset 0 1px 0 #ffffff0a}
+.mbox{border:1px solid var(--line2);border-radius:12px;background-color:var(--panel);background-image:linear-gradient(135deg,rgba(21,29,26,.82),rgba(12,18,16,.88)),url('ui/modal-jade-texture.webp?v=20261004-v2');background-size:cover;background-position:center;box-shadow:0 16px 48px #000a,inset 0 1px 0 #ffffff0a}
 #modal.item-preview-modal{background:rgba(0,0,0,.46)}
 #modal.item-preview-modal .mbox{background-color:rgba(14,23,19,.56);background-image:linear-gradient(135deg,rgba(27,42,35,.74),rgba(10,17,14,.7));-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);border-color:rgba(112,145,123,.72);box-shadow:0 16px 48px #0008,inset 0 1px 0 #d3ffe20d}
 #modal.item-preview-modal .item-segment{background:rgba(7,13,10,.62)}
@@ -414,7 +504,7 @@ html,body,button,input,select,textarea{font-family:var(--font)}
 b,strong,h1,h2,h3,h4,th{font-weight:400}
 
 /* nut doi chuot / joystick: chi hien tren may tinh man hinh ngang */
-#inBtn{display:none;position:absolute;right:8px;top:70px;z-index:4}
+#inBtn{display:none;position:absolute;right:8px;top:70px;z-index:22}
 body.deskland #inBtn{display:inline-flex}
 body.sv #inBtn{top:44px}
 
@@ -476,6 +566,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 @media (max-width:520px){
   #hud{grid-template-columns:minmax(0,1fr);gap:2px}
   #hud .bar.xp{grid-column:auto}
+}
+@media (min-width:700px){
+  #hud{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #hud .bar.xp{grid-column:auto}
+  #hud .bar.hp{order:1}
+  #hud .bar.mp{order:2}
+  #hud .bar.xp{order:3}
 }
 
 /* v1.0.5: khóa đồ và hàng nút nhanh Giang hồ */

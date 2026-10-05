@@ -78,8 +78,8 @@ function makeItem(detail, particular, tier, nMagic) {
 /* Roi do khi ha quai: so luong theo loai quai, mon theo RandRate/RandRange cua tep droprate */
 function rollDrops(e) {
   const df = dropFile(e.L), items = df.items.filter(x => x[0] === 0 && x[1] <= 9);
-  // Giam luong trang bi tren dat: quai thuong chi co 20% roi 1 mon; tinh anh 1-2; trum 3-5.
-  const n = e.cls === 'boss' ? irnd(3, 5) : e.cls === 'elite' ? irnd(1, 2) : (Math.random() < 0.2 ? 1 : 0);
+  // Giam luong trang bi tren dat: quai thuong 15% roi 1 mon; tinh anh 1; trum 2-4.
+  const n = e.cls === 'boss' ? irnd(2, 4) : e.cls === 'elite' ? 1 : (Math.random() < 0.15 ? 1 : 0);
   const out = [];
   const count = n * (e.bonusDrop || 1) * ((R.P && R.P.dropMul) || 1), whole = Math.floor(count);
   const dropCount = whole + (count > whole && Math.random() < count - whole ? 1 : 0);

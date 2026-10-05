@@ -1,8 +1,3 @@
-fonts/ibm-plex-mono-400-cyrillic-ext.woff2
-fonts/ibm-plex-mono-400-cyrillic.woff2
-fonts/ibm-plex-mono-400-latin-ext.woff2
-fonts/ibm-plex-mono-400-latin.woff2
-fonts/ibm-plex-mono-400-vietnamese.woff2
 m.mp3
 ui/s0.png
 ui/s1.png

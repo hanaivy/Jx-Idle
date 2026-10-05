@@ -236,16 +236,22 @@ function strikeTargets(a, targets) {
     else R.hitSeq.push({ at: R.hitClock + i * gap, attack, target: e });
   }
 }
-/* Kỹ năng phụ cấp 11 kích hoạt từ sự kiện va chạm / đạn bay. */
+/* Kỹ năng phụ cấp cấp 11 kích hoạt theo các sự kiện va chạm / đạn bay / đạn biến mất. */
 function skillEventStage2(a, target, enemies) {
-  const event = a.ev && SKILL_EVENT_BONUS[a.id]; if (!event) return;
-  const near = enemies.filter(e => !e.dead && e.hp > 0 && Math.hypot(e.x - target.x, e.y - target.y) < 150)
-    .sort((x, y) => Math.hypot(x.x - target.x, x.y - target.y) - Math.hypot(y.x - target.x, y.y - target.y))
-    .slice(0, event.max);
+  const eventLevel = skillEventLevel(SK[a.id]);
+  const event = eventLevel && a.L >= eventLevel ? skillEventAtLevel(a) : null;
+  if (!event) return;
+  const center = event.rays ? H : target, radius = event.rays ? 280 : 150, max = event.rays ? event.rays(a.L) : event.max;
+  // Nhiếp Hồn Nguyệt Ảnh vẫn phát m150 nếu m149 vừa kết liễu mục tiêu trong cùng lượt đánh (web xét dead, chưa lọc hp <= 0).
+  const near = enemies.filter(e => !e.dead && (e.hp > 0 || ([339, 362].includes(a.id) && e === target)) && Math.hypot(e.x - center.x, e.y - center.y) < radius && obsLine(center.x, center.y, e.x, e.y))
+    .sort((x, y) => Math.hypot(x.x - center.x, x.y - center.y) - Math.hypot(y.x - center.x, y.y - center.y))
+    .slice(0, max);
   for (let i = 0; i < near.length; i++) {
-    const e = near[i], parts = { [event.el]: a.tot * event.k };
-    heroHit(Object.assign({}, a, { parts, crit: event.el === 'phys' ? a.crit : 0, useAR: false, ev: false }), e);
-    if (typeof skillEventFx === 'function') skillEventFx(e, a, i === 0 ? event.n : null);
+    if (event.chance && Math.random() >= event.chance) continue;
+    const e = near[i], parts = skillEventParts(R.P, a, event);
+    heroHit(Object.assign({}, a, { parts, stun: event.stun || a.stun, crit: event.el === 'phys' ? a.crit : 0, useAR: false, ev: false }), e);
+    const label = event.rays ? `${event.n} ×${max}` : event.n;
+    if (typeof skillEventFx === 'function') skillEventFx(e, a, i === 0 ? label : null, event.rays ? H : null, target);
   }
 }
 function heroAttack(useMain = false) {
@@ -271,7 +277,7 @@ function heroAttack(useMain = false) {
   const targets = candidates.slice(0, a.targets - 1);
   targets.unshift(t);
   strikeTargets(a, targets);
-  if (a.ev) skillEventStage2(a, t, list);
+  skillEventStage2(a, t, list);
   if (a.radial) skillFx(H, t, a); // mot lan phong 4 tia, khong lap lai theo so quai trung
   H.face = t.x >= H.x ? 1 : -1; H.dir = dirOf(t.x - H.x, t.y - H.y); H.act = 'at'; H.actT = 0;
   if (a.id) skillSfx(a.id); else npcSfx(W.hero[S.fac] && W.hero[S.fac].anim, 'at', 0.4);

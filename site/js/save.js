@@ -101,7 +101,7 @@ function migrate(o) {
   const rebirths = clamp(s.rw.stat.reborn | 0, 0, REBORN_MAX), pickedPaths = ['ho', 'bao', 'tru'].reduce((n, k) => n + (s.rw.tp[k] || 0), 0);
   s.rw.tpPend = Math.max(0, rebirths - pickedPaths);
   // A: ten nhan vat + gioi tinh; B: toc do game; C: moc ngay da dung bang thu nghiem
-  s.name = typeof s.name === 'string' && s.name.trim() ? s.name.trim().slice(0, 16) : 'Tân thủ';
+  s.name = typeof s.name === 'string' && s.name.trim() ? s.name.trim().slice(0, 24) : 'Tân thủ';
   s.sex = (s.sex | 0) === 1 ? 1 : 0;
   s.speed = [1, 1.5, 2.5].includes(+s.speed) ? +s.speed : 1;
   s.adminDay = typeof s.adminDay === 'string' ? s.adminDay.slice(0, 10) : '';
@@ -128,7 +128,7 @@ function migrate(o) {
 }
 /* Chuyển giới tính giữ nguyên mọi món, kể cả khi túi đầy. Đồ tháo ra được khóa để Auto không bán. */
 function setAppearance(name, sex) {
-  S.name = String(name || '').trim().slice(0, 16) || 'Tân thủ';
+  S.name = String(name || '').trim().slice(0, 24) || 'Tân thủ';
   S.sex = sex === 1 ? 1 : 0; S.sexSet = 1;
   for (const k of Object.keys(S.eq)) if (!sexOk(S.eq[k])) { const it = S.eq[k]; it.locked = true; S.inv.unshift(it); delete S.eq[k]; }
   R.dirty = true; invDirty = true;

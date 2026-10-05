@@ -1,6 +1,6 @@
 /* Bãi quái khắp bản đồ đánh ải; tháp và Luyện Công dùng cơ chế riêng. */
 'use strict';
-const FIELD_MOBS = { cell: 400, perCell: 2, max: 240, aggro: 240, leash: 520, respawn: 12 };
+const FIELD_MOBS = { cell: 400, perCell: 2, max: 240, aggro: 240, leash: 520, wander: 50, respawn: 5.6 };
 function fieldSpawnPoints() {
   const buckets = new Map(), g = OBS.g, pad = WORLD.pad + 32;
   const add = (x, y) => {
@@ -29,7 +29,7 @@ function fieldSpawnPoints() {
 }
 function fieldMob(slot) {
   const z = zoneOf(S.stage), e = makeEnemy(slot.tid, stageLevel(S.stage), slot.cls, slot.x, slot.y);
-  e.fieldSlot = slot; e.homeX = slot.x; e.homeY = slot.y; e.aggro = false;
+  e.fieldSlot = slot; e.homeX = slot.x; e.homeY = slot.y; e.aggro = false; e.fieldWanderT = rnd(0, 3);
   slot.enemy = e; R.enemies.push(e); return e;
 }
 function startFieldWave() {
@@ -66,7 +66,7 @@ function fieldTick(dt) {
   if (goldBossDue() && !R.enemies.some(e => e.goldBoss && !e.dead)) spawnGoldBoss();
 }
 function fieldKilled(e) {
-  if (e.fieldSlot) { e.fieldSlot.enemy = null; e.fieldSlot.wait = FIELD_MOBS.respawn + rnd(0, 6); }
+  if (e.fieldSlot) { e.fieldSlot.enemy = null; e.fieldSlot.wait = FIELD_MOBS.respawn + rnd(0, 2.8); }
   R.field.quest.kills++;
   R.stall = 0;
 }
@@ -81,9 +81,25 @@ function fieldIdle(e, dt) {
   if (e.returning) e.aggro = false;
   if (!e.returning && !e.aggro && homeDist < FIELD_MOBS.leash && heroDist < FIELD_MOBS.aggro && obsLine(e.x, e.y, H.x, H.y)) e.aggro = true;
   if (e.aggro) return false;
-  // Xa nhân vật: nghỉ tại bãi. Kéo quá xa: trở về bãi và hồi dần.
-  e.moving = homeDist > 12;
-  if (e.moving) obsSteer(e, e.homeX, e.homeY, e.spd * dt);
+  if (e.returning) {
+    e.moving = homeDist > 12;
+    if (e.moving) obsSteer(e, e.homeX, e.homeY, e.spd * 1.6 * dt);
+  } else {
+    // Đi tuần ngẫu nhiên gần điểm sinh, dùng obsMove để trượt theo lối đi quanh vật cản.
+    if (e.fieldWanderT === undefined) e.fieldWanderT = rnd(0, 3);
+    if ((e.fieldWanderT -= dt) <= 0) {
+      e.fieldWanderT = rnd(2, 5);
+      e.fieldWanderX = e.homeX + rnd(-FIELD_MOBS.wander, FIELD_MOBS.wander);
+      e.fieldWanderY = e.homeY + rnd(-FIELD_MOBS.wander, FIELD_MOBS.wander) * 0.6;
+    }
+    const dx = (e.fieldWanderX ?? e.x) - e.x, dy = (e.fieldWanderY ?? e.y) - e.y, d = Math.hypot(dx, dy);
+    e.moving = d > 4;
+    if (e.moving) {
+      const step = Math.min(d, e.spd * 0.4 * dt);
+      obsMove(e, e.x + dx / d * step, e.y + dy / d * step);
+      e.face = dx >= 0 ? 1 : -1; e.dir = dirOf(dx, dy);
+    }
+  }
   e.hp = Math.min(e.max, e.hp + e.max * .05 * dt);
   return true;
 }

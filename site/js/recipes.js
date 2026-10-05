@@ -107,13 +107,13 @@ function enchase(it, htLvl, key) {
 /* ---------- khoang roi ---------- */
 const liveAttr = a => !DEAD_AFFIX.has(canonAttr(attrName(a)));   // khong roi khoang cua dong ma ban idle khong co co che (loot.js DEAD_AFFIX)
 const orePool = place => [...new Set(J.affixLevel.filter(r => r.pre === (place % 2 === 0 ? 1 : 0) && r.lvl === 1 && liveAttr(r.a)).map(r => r.a))];
-/* ty le roi (tinh chinh bang tools/sim_craft.py: moi gio choi ~ 4 khoang + 5 Huyen Tinh) */
-const DROP = { ore: { boss: 0.20, elite: 0.03, normal: 0.003 }, ht: { boss: 0.22, elite: 0.033, normal: 0.0033 },
-  shard: { boss: 0.06, elite: 0.009, normal: 0.0003 }, wc: { boss: 0.12, elite: 0.015, normal: 0.001 }, mys: { boss: 0.12, elite: 0.015, normal: 0.001 } };
+/* Ty le roi vat lieu da giam de cham nhip gom nguyen lieu trong ban idle. */
+const DROP = { ore: { boss: 0.15, elite: 0.02, normal: 0.002 }, ht: { boss: 0.16, elite: 0.025, normal: 0.0025 },
+  shard: { boss: 0.04, elite: 0.006, normal: 0.0002 }, wc: { boss: 0.08, elite: 0.01, normal: 0.0007 }, mys: { boss: 0.08, elite: 0.01, normal: 0.0007 } };
 const dropP = (k, e) => DROP[k][e.cls] ?? DROP[k].normal;
 function skillBookDrop(e) {
   if (!e || e.L < 90 || e.cls === 'normal') return false;
-  const chance = e.cls === 'boss' ? 0.08 : 0.01;
+  const chance = e.cls === 'boss' ? 0.05 : 0.0075;
   if (Math.random() >= chance) return false;
   matAdd('misc', 'bk90'); return true;
 }
@@ -187,7 +187,7 @@ function platDrop(e) {
   const out = [];
   // B4: Tinh Hong Bao Thach - nguyen lieu MOI. Chi tinh anh / trum moi co ti le dang ke,
   // quai thuong cap cao thi rat hiem. Dung cho bao hiem Lo Huyen Tinh (A2) va qua Tai Xiu (D).
-  const pThbt = e.cls === 'boss' ? 0.35 : e.cls === 'elite' ? 0.06 : (e.L >= 80 ? 0.004 : 0);
+  const pThbt = e.cls === 'boss' ? 0.25 : e.cls === 'elite' ? 0.04 : (e.L >= 80 ? 0.003 : 0);
   if (pThbt > 0 && Math.random() < pThbt) { matAdd('misc', 'thbt'); out.push('1 Tinh Hồng Bảo Thạch'); }
   if (e.L < 60 && e.cls !== 'boss') return out.length ? out.join(', ') : null;
   if (Math.random() < dropP('wc', e)) { const n = rcInt(1, 2); matAdd('misc', 'wc', n); out.push(`${n} Thủy Tinh Trắng`); }

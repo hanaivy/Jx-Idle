@@ -17,8 +17,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-<link rel="preload" as="image" href="fx/st_0.webp">
-<link rel="preload" as="image" href="fx/st_1.webp">
+<link rel="preload" as="image" href="fx/st_0.webp?v=20261004-v2">
+<link rel="preload" as="image" href="fx/st_1.webp?v=20261004-v2">
 <link rel="manifest" href="manifest.json">
 <title>Võ Lâm Idle – Game Kiếm Hiệp Nhàn Rỗi Treo Máy Offline</title>
 <meta property="og:locale" content="vi_VN">
@@ -48,7 +48,7 @@
 }
 </script>
 <link rel="stylesheet" href="fonts/ibm-plex-mono.css?v=20261003-v131">
-<link rel="stylesheet" href="style.css?v=20261004-v218">
+<link rel="stylesheet" href="style.css?v=20261005-v229">
 </head>
 <body>
 <div id="app">
@@ -83,6 +83,35 @@
       </button>
     </div>
     <button id="inBtn" class="chip"></button>
+    <aside id="worldChat" aria-label="Chat thế giới">
+      <section class="wc-panel" aria-label="Chat thế giới" hidden>
+        <header class="wc-topline">
+          <nav class="wc-tabs" aria-label="Các tab chat">
+            <button class="wc-tab active" type="button" data-chat-tab="world" aria-pressed="true">Thế giới</button>
+            <button class="wc-tab" type="button" data-chat-tab="system" aria-pressed="false">Nhật ký</button>
+          </nav>
+          <div class="wc-header-right">
+            <small class="wc-online">Online 0</small>
+            <span class="wc-status" role="status" aria-live="polite" hidden></span>
+            <button class="wc-maximize" type="button" aria-expanded="false" aria-label="Phóng to khung chat" title="Phóng to khung chat">⛶</button>
+          </div>
+        </header>
+        <div class="wc-list" role="log" aria-label="Tin nhắn chat thế giới" aria-live="polite" aria-relevant="additions"></div>
+        <div class="wc-system-list" aria-label="Nhật ký hệ thống" hidden></div>
+        <form class="wc-form">
+          <div class="wc-compose">
+            <button class="wc-emoji-toggle" type="button" aria-label="Mở bảng biểu cảm" aria-expanded="false">☺</button>
+            <input class="wc-input" type="text" maxlength="240" autocomplete="off" placeholder="Nhập tin nhắn…" aria-label="Tin nhắn">
+            <button class="wc-send" type="submit">Gửi</button>
+          </div>
+        </form>
+        <div class="wc-emoji-picker" role="dialog" aria-label="Biểu cảm" hidden>
+          <div class="wc-emoji-toolbar"><span>Biểu cảm</span><button class="wc-emoji-close" type="button" aria-label="Đóng bảng biểu cảm">✕</button></div>
+          <div class="wc-emoji-grid" role="grid" aria-label="Chọn biểu cảm"></div>
+        </div>
+      </section>
+      <button class="wc-toggle" type="button" aria-expanded="false" aria-label="Mở chat thế giới" title="Chat thế giới">💬<span class="wc-unread" hidden></span></button>
+    </aside>
     <div id="svHud" class="hidden">
       <div id="svTopBar">
         <span id="svGoldWrap">💰 <b id="svGold">0</b></span>
@@ -130,29 +159,29 @@
 <script src="js/set-audit.js?v=20261003-v131"></script>
 <script src="world.js?v=20261004-v140"></script>
 <script src="sound.js?v=20261003-v131"></script>
-<script src="fx.js?v=20261003-v131"></script>
+<script src="fx.js?v=20261004-v254"></script>
 <script src="jmo.js?v=20261003-v131"></script>
 <script src="locales/vi.js?v=20261004-v132"></script>
-<script src="js/core.js?v=20261004-v180"></script>
+<script src="js/core.js?v=20261005-v181"></script>
 <script src="js/mapobs.js?v=20261003-v131"></script>
-<script src="js/stats.js?v=20261004-v138"></script>
-<script src="js/loot.js?v=20261004-v181"></script>
+<script src="js/stats.js?v=20261005-v256"></script>
+<script src="js/loot.js?v=20261004-v182"></script>
 <script src="rdata.js?v=20261003-v131"></script>
-<script src="js/sets.js?v=20261004-v161"></script>
-<script src="js/recipes.js?v=20261004-v178"></script>
+<script src="js/sets.js?v=20261004-v162"></script>
+<script src="js/recipes.js?v=20261004-v179"></script>
 <script src="js/enemy-balance.js?v=20261004-v149"></script>
-<script src="js/field-spawn.js?v=20261003-v131"></script>
-<script src="js/combat.js?v=20261004-v162"></script>
-<script src="js/skillsys.js?v=20261004-v208"></script>
+<script src="js/field-spawn.js?v=20261005-v134"></script>
+<script src="js/combat.js?v=20261005-v260"></script>
+<script src="js/skillsys.js?v=20261005-v209"></script>
 <script src="js/save.js?v=20261004-v179"></script>
-<script src="js/render.js?v=20261004-v154"></script>
-<script src="js/look.js?v=20261004-v8"></script>
+<script src="js/render.js?v=20261005-v285"></script>
+<script src="js/look.js?v=20261004-v253"></script>
 <script src="jxlook.js?v=20261004-v1"></script>
 <script src="js/jxparts.js?v=20261004-v1"></script>
 <script src="js/audio.js?v=20261004-v162"></script>
-<script src="js/ui.js?v=20261004-v206"></script>
+<script src="js/ui.js?v=20261005-v207"></script>
 <script src="js/control.js?v=20261004-v192"></script>
-<script src="js/shop.js?v=20261004-v193"></script>
+<script src="js/shop.js?v=20261005-v194"></script>
 <script src="js/rewards.js?v=20261004-v168"></script>
 <script src="js/activities.js?v=20261003-v131"></script>
 <script src="js/depth.js?v=20261004-v178"></script>
@@ -163,7 +192,8 @@
 <script src="js/admin.js?v=20261003-v131"></script>
 <script src="js/guide.js?v=20261004-v181"></script>
 <script src="js/stash.js?v=20261004-v193"></script>
-<script src="js/survival.js?v=20261004-v140"></script>
+<script src="js/survival.js?v=20261005-v141"></script>
 <script src="js/main.js?v=20261004-v160"></script>
+<script src="js/chat.js?v=20261005-v3"></script>
 </body>
 </html>

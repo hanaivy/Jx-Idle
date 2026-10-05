@@ -60,10 +60,14 @@ def fetch_code(refresh):
             d = get(p)
             if d is not None:
                 save(p, d)
+    for p in SHELL:
+        if p.endswith(".html") and exists(p):
+            h_path = os.path.join(ROOT, p)
+            html_txt = open(h_path, encoding="utf-8").read()
+            if CF_BEACON.search(html_txt):
+                html_txt = CF_BEACON.sub("", html_txt)
+                save(p, html_txt.encode("utf-8"))
     html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
-    if CF_BEACON.search(html):
-        html = CF_BEACON.sub("", html)
-        save("index.html", html.encode("utf-8"))
     code = re.findall(r'(?:src|href)="([^"?#]+\.(?:js|css))["?#]', html)
     for p in code:
         p = p.lstrip("./")
@@ -100,11 +104,18 @@ def collect():
             else:
                 bare.add(s)
     # JXLOOK sheets -> img/jx/<key>.webp
-    out = subprocess.run(
-        ["node", "-e", 'global.window={};require(process.argv[1]);'
-         'process.stdout.write(JSON.stringify(Object.keys(window.JXLOOK.sheets)))',
-         os.path.join(ROOT, "jxlook.js")], capture_output=True, text=True, check=True)
-    for k in json.loads(out.stdout):
+    try:
+        out = subprocess.run(
+            ["node", "-e", 'global.window={};require(process.argv[1]);'
+             'process.stdout.write(JSON.stringify(Object.keys(window.JXLOOK.sheets)))',
+             os.path.join(ROOT, "jxlook.js")], capture_output=True, text=True, check=True)
+        sheets = json.loads(out.stdout)
+    except Exception:
+        txt = open(os.path.join(ROOT, "jxlook.js"), encoding="utf-8").read()
+        idx = txt.find('{')
+        data = json.loads(txt[idx:].strip().rstrip(';'))
+        sheets = data['sheets'].keys()
+    for k in sheets:
         full.add(f"img/jx/{k}.webp")
     # Template-built paths found in ui.js / control.js
     full.update(f"ui/s{i}.png" for i in range(5))

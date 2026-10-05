@@ -79,6 +79,7 @@ const SHAOLIN_STATE_SPRITES = {
   16: { f: 'fx/st_1.webp', n: 10, w: 107, h: 75, ax: 50, ay: 37, ms: 120, pos: 'foot' },
   273: { f: 'fx/st_29.webp', n: 15, w: 168, h: 167, ax: 85, ay: 168, ms: 80, pos: 'head' },
 };
+const HERO_LABEL_CLEARANCE = 30;
 function drawShaolinSkillEffects(c, layer) {
   if (S.fac !== 'shaolin' || S.lookFx === false || R.deadT > 0) return;
   const t = R.clock || 0, scale = HERO_SCALE * 0.6;
@@ -89,7 +90,7 @@ function drawShaolinSkillEffects(c, layer) {
     const im = img(state.f); if (!im.complete || !im.naturalWidth) continue;
     const frame = Math.floor(t * 1000 / state.ms) % state.n;
     // Sprite trạng thái của web đã canh anchor từ chân nhân vật cho cả body lẫn foot.
-    const y = H.y;
+    const y = H.y - (state.pos === 'head' ? HERO_LABEL_CLEARANCE : 0);
     c.save(); c.globalAlpha = 0.9;
     c.drawImage(im, frame * state.w, 0, state.w, state.h,
       H.x - state.ax * scale, y - state.ay * scale, state.w * scale, state.h * scale);
@@ -98,8 +99,8 @@ function drawShaolinSkillEffects(c, layer) {
 }
 /* Tian Vuong buff effects copied from the live site's JX state sprite table. */
 const TIANWANG_STATE_SPRITES = {
-  33: { f: 'fx/st_2.webp', n: 10, w: 36, h: 40, ax: 16, ay: 116, ms: 120 },
-  42: { f: 'fx/st_3.webp', n: 20, w: 75, h: 78, ax: 35, ay: 72, ms: 60 },
+  33: { f: 'fx/st_2.webp', n: 10, w: 36, h: 40, ax: 16, ay: 116, ms: 120, pos: 'head' },
+  42: { f: 'fx/st_3.webp', n: 20, w: 75, h: 78, ax: 35, ay: 72, ms: 60, pos: 'head' },
 };
 function drawTianwangSkillEffects(c, layer) {
   if (S.fac !== 'tianwang' || layer !== 'over' || S.lookFx === false || R.deadT > 0) return;
@@ -111,7 +112,7 @@ function drawTianwangSkillEffects(c, layer) {
     const frame = Math.floor(t * 1000 / state.ms) % state.n;
     c.save(); c.globalAlpha = 0.9;
     c.drawImage(im, frame * state.w, 0, state.w, state.h,
-      H.x - state.ax * scale, H.y - state.ay * scale, state.w * scale, state.h * scale);
+      H.x - state.ax * scale, H.y - state.ay * scale - HERO_LABEL_CLEARANCE, state.w * scale, state.h * scale);
     c.restore();
   }
 }
@@ -164,7 +165,8 @@ function drawJxStateSprite(c, s, x, y, scale, alpha = 0.9) {
   const im = img(s.f); if (!im.complete || !im.naturalWidth) return;
   const frame = Math.floor((R.clock || 0) * 1000 / s.ms) % s.n, k = scale * 0.6;
   c.save(); c.globalAlpha = alpha;
-  c.drawImage(im, frame * s.w, 0, s.w, s.h, x - s.ax * k, y - s.ay * k, s.w * k, s.h * k);
+  const headOffset = s.pos === 'head' && x === H.x && y === H.y ? HERO_LABEL_CLEARANCE : 0;
+  c.drawImage(im, frame * s.w, 0, s.w, s.h, x - s.ax * k, y - s.ay * k - headOffset, s.w * k, s.h * k);
   c.restore();
 }
 function drawTianrenSkillEffects(c, layer) {
@@ -194,6 +196,83 @@ const THUYYEN_STATE_SPRITES = {
 function drawThuyYenSkillEffects(c, layer) {
   if (S.fac !== 'cuiyan' || layer !== 'over' || S.lookFx === false || R.deadT > 0) return;
   for (const id of [100, 109]) if (skillBuffActive(id)) drawJxStateSprite(c, THUYYEN_STATE_SPRITES[id], H.x, H.y, HERO_SCALE);
+}
+/* Trạng thái bùa lợi và bùa hại Côn Lôn theo bảng JXST của bản web. */
+const KUNLUN_STATE_SPRITES = {
+  171: { f: 'fx/st_24.webp', n: 15, w: 110, h: 95, ax: 52, ay: 87, ms: 80, pos: 'body' },
+  392: { f: 'fx/st_36.webp', n: 15, w: 38, h: 49, ax: 19, ay: 111, ms: 80, pos: 'head' },
+  174: { f: 'fx/st_26.webp', n: 15, w: 39, h: 45, ax: 19, ay: 111, ms: 80, pos: 'head' },
+  173: { f: 'fx/st_25.webp', n: 20, w: 129, h: 115, ax: 65, ay: 110, ms: 60, pos: 'body' },
+  178: { f: 'fx/st_28.webp', n: 24, w: 94, h: 100, ax: 46, ay: 79, ms: 50, pos: 'body' },
+  393: { f: 'fx/st_37.webp', n: 15, w: 37, h: 45, ax: 18, ay: 111, ms: 80, pos: 'head' },
+  175: { f: 'fx/st_27.webp', n: 15, w: 25, h: 50, ax: 13, ay: 129, ms: 80, pos: 'head' },
+  90: { f: 'fx/st_12.webp', n: 15, w: 37, h: 43, ax: 18, ay: 109, ms: 80, pos: 'head' },
+  394: { f: 'fx/st_38.webp', n: 8, w: 133, h: 128, ax: 64, ay: 102, ms: 150, pos: 'body' },
+};
+function drawKunlunSkillEffects(c, layer) {
+  if (S.fac !== 'kunlun' || S.lookFx === false || R.deadT > 0) return;
+  const seen = new Set();
+  for (const id of [171, 173, 178]) {
+    const state = KUNLUN_STATE_SPRITES[id];
+    if ((state.pos === 'foot') !== (layer === 'under') || !skillBuffActive(id) || seen.has(state.f)) continue;
+    seen.add(state.f); drawJxStateSprite(c, state, H.x, H.y, HERO_SCALE);
+  }
+}
+function drawKunlunEnemyCurses(c, e, scale) {
+  if (S.fac !== 'kunlun' || S.lookFx === false || S.lowFx || !e.curse) return;
+  const now = R.skillClock || 0, seen = new Set();
+  for (const id of Object.keys(e.curse)) {
+    const state = KUNLUN_STATE_SPRITES[id];
+    if (!state || e.curse[id] <= now || seen.has(state.pos)) continue;
+    seen.add(state.pos);
+    drawJxStateSprite(c, state, e.x, e.y, scale, Math.min(0.9, (e.curse[id] - now) / 1.5));
+  }
+}
+/* Trạng thái Thất Tinh Trận và Tọa Vọng Vô Ngã theo bảng JXST của bản web. */
+const WUDANG_STATE_SPRITES = {
+  159: { f: 'fx/st_23.webp', n: 24, w: 104, h: 82, ax: 53, ay: 43, ms: 50, pos: 'foot' },
+  157: { f: 'fx/st_22.webp', n: 24, w: 92, h: 96, ax: 43, ay: 139, ms: 50, pos: 'head' },
+};
+function drawWudangSkillEffects(c, layer) {
+  if (S.fac !== 'wudang' || S.lookFx === false || R.deadT > 0) return;
+  for (const id of [159, 157]) {
+    const state = WUDANG_STATE_SPRITES[id], skill = SK[id];
+    if (!S.sk[id] || !skill || (state.pos === 'foot') !== (layer === 'under')) continue;
+    if (id === 157 ? !skillBuffActive(id) : !skApplies(skill)) continue;
+    drawJxStateSprite(c, state, H.x, H.y, HERO_SCALE);
+  }
+}
+/* Vòng sáng và trạng thái Nga Mi theo bảng JXST của bản web. */
+const EMEI_STATE_SPRITES = {
+  89: { f: 'fx/st_11.webp', n: 16, w: 92, h: 65, ax: 47, ay: 35, ms: 75, pos: 'foot' },
+  86: { f: 'fx/st_10.webp', n: 16, w: 91, h: 64, ax: 47, ay: 35, ms: 75, pos: 'foot' },
+  92: { f: 'fx/st_13.webp', n: 15, w: 99, h: 75, ax: 51, ay: 43, ms: 80, pos: 'foot' },
+  282: { f: 'fx/st_31.webp', n: 20, w: 81, h: 73, ax: 40, ay: 79, ms: 60, pos: 'body' },
+  332: { f: 'fx/st_32.webp', n: 20, w: 130, h: 78, ax: 66, ay: 37, ms: 60, pos: 'foot' },
+};
+function drawEmeiSkillEffects(c, layer) {
+  if (S.fac !== 'emei' || S.lookFx === false || R.deadT > 0) return;
+  const ids = Object.keys(EMEI_STATE_SPRITES).map(Number).filter(id => S.sk[id] && SK[id] && !isAttack(SK[id]) && skApplies(SK[id]))
+    .sort((a, b) => SK[b].req - SK[a].req);
+  const seen = {};
+  for (const id of ids) {
+    const state = EMEI_STATE_SPRITES[id];
+    if ((state.pos === 'foot') !== (layer === 'under')) continue;
+    const frames = seen[state.pos] || (seen[state.pos] = []);
+    if (frames.length >= 3 || frames.includes(state.f)) continue;
+    frames.push(state.f); drawJxStateSprite(c, state, H.x, H.y, HERO_SCALE);
+  }
+}
+/* Trạng thái buff Cái Bang theo bảng JXST của bản web. */
+const GAIBANG_STATE_SPRITES = {
+  277: { f: 'fx/st_30.webp', n: 15, w: 68, h: 41, ax: 29, ay: 56, ms: 80, pos: 'body' },
+  130: { f: 'fx/st_16.webp', n: 16, w: 130, h: 98, ax: 68, ay: 83, ms: 75, pos: 'body' },
+};
+function drawGaibangSkillEffects(c, layer) {
+  if (S.fac !== 'gaibang' || layer !== 'over' || S.lookFx === false || R.deadT > 0) return;
+  for (const id of [277, 130]) {
+    if (skillBuffActive(id)) drawJxStateSprite(c, GAIBANG_STATE_SPRITES[id], H.x, H.y, HERO_SCALE);
+  }
 }
 /* Dom sang vu khi + hat hao quang bay len (ve sau nhan vat) */
 function drawLookFx(c, dt) {

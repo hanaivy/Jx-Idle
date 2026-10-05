@@ -54,7 +54,7 @@ const ENG_PER_PCT = 1, STR_PER_PCT = 1, DEX_PCT_RANGED = 0.5, IDLE_LIFE_PER_LEVE
     });
   }
 })();
-const PTS_PER_LEVEL = 10, SKILL_PTS_PER_LEVEL = 2, MAX_LEVEL = 9999;
+const PTS_PER_LEVEL = 5, SKILL_PTS_PER_LEVEL = 1, MAX_LEVEL = 9999;
 
 /* ---------- thuoc tinh ma thuat ---------- */
 const ATTR_ID = Object.fromEntries(J.attr.map((n, i) => [n, i]));

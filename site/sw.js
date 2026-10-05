@@ -1,5 +1,6 @@
 // Download the complete local app shell before offering an update to the player.
-const C = 'jxidle-v20261004-v249';
+const C = 'jxidle-v20261005-v337';
+const A = 'jxidle-assets-20261004-v2';
 const scopeUrl = new URL('./', self.registration.scope);
 const localUrl = value => {
   try {
@@ -13,7 +14,7 @@ async function cacheFresh(cache, url, required = false) {
   try {
     const request = new Request(url, { cache: 'reload', credentials: 'same-origin' });
     const response = await fetch(request);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
+    if (response.status !== 200) throw new Error(`Expected a complete response, got HTTP ${response.status}: ${url}`);
     await cache.put(request, response.clone());
     return response;
   } catch (error) {
@@ -21,9 +22,18 @@ async function cacheFresh(cache, url, required = false) {
     return null;
   }
 }
+function cacheFullResponse(cache, request, response) {
+  if (request.headers.has('range') || response.status !== 200) return Promise.resolve();
+  return cache.put(request, response.clone()).catch(() => {});
+}
+async function cacheWebpOnce(cache, url) {
+  const request = new Request(url, { credentials: 'same-origin' });
+  if (!(await cache.match(request))) await cacheFresh(cache, url);
+}
 
 async function precacheAppShell() {
   const cache = await caches.open(C);
+  const assetCache = await caches.open(A);
   const pageUrl = scopeUrl.href;
   const page = await cacheFresh(cache, pageUrl, true);
   const html = await page.clone().text();
@@ -44,7 +54,9 @@ async function precacheAppShell() {
 
   // Cache linked JS/CSS as a single required set: don't activate a partial update.
   await Promise.all([...required].map(url => cacheFresh(cache, url, true)));
-  await Promise.all([...optional].map(url => cacheFresh(cache, url)));
+  await Promise.all([...optional].map(url => /\.webp$/i.test(new URL(url).pathname)
+    ? cacheWebpOnce(assetCache, url)
+    : cacheFresh(cache, url)));
 
   // Also download local fonts and images referenced from stylesheets.
   const cssResponses = await Promise.all(styles.map(url => cache.match(url)));
@@ -60,7 +72,13 @@ async function precacheAppShell() {
       if (url) cssAssets.add(url.href);
     }
   }
-  await Promise.all([...cssAssets].map(url => cacheFresh(cache, url)));
+  await Promise.all([...cssAssets].map(async url => {
+    if (/\.webp$/i.test(new URL(url).pathname)) await cacheWebpOnce(assetCache, url);
+    else {
+      const request = new Request(url, { credentials: 'same-origin' });
+      if (!(await cache.match(request))) await cacheFresh(cache, url);
+    }
+  }));
 }
 
 self.addEventListener('install', e => e.waitUntil(precacheAppShell()));
@@ -68,16 +86,24 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') e.waitUntil(self.skipWaiting());
 });
 self.addEventListener('activate', e => e.waitUntil(caches.keys()
-  .then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k))))
+  .then(ks => Promise.all(ks.filter(k => k.startsWith('jxidle-') && k !== C && k !== A).map(k => caches.delete(k))))
   .then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (e.request.headers.has('range')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   const path = new URL(e.request.url).pathname;
+  if (path.includes('/api/chat/')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   const isMapEditorAsset = /\/edit_map\.(?:html|js|css)$/.test(path);
   if (isMapEditorAsset) {
     const fresh = new Request(e.request, { cache: 'no-cache' });
-    e.respondWith(fetch(fresh).then(r => {
-      if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); }
+    e.respondWith(fetch(fresh).then(async r => {
+      await caches.open(C).then(c => cacheFullResponse(c, e.request, r));
       return r;
     }).catch(() => caches.match(e.request)));
     return;
@@ -85,16 +111,17 @@ self.addEventListener('fetch', e => {
   const isEditableMapSource = path.endsWith('/jmo.js');
   if (isEditableMapSource) {
     const fresh = new Request(e.request, { cache: 'no-cache' });
-    e.respondWith(fetch(fresh).then(r => {
-      if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); }
+    e.respondWith(fetch(fresh).then(async r => {
+      await caches.open(C).then(c => cacheFullResponse(c, e.request, r));
       return r;
     }).catch(() => caches.match(e.request)));
     return;
   }
+  const cacheName = /\.webp$/i.test(path) ? A : C;
   // The new worker's preloaded shell is authoritative after the player confirms
   // the update; this avoids the browser HTTP cache returning older JS/CSS.
-  e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request).then(r => {
-    if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); }
+  e.respondWith(caches.open(cacheName).then(cache => cache.match(e.request).then(cached => cached || fetch(e.request).then(async r => {
+    await cacheFullResponse(cache, e.request, r);
     return r;
-  })).catch(() => caches.match(e.request)));
+  }))).catch(() => caches.match(e.request)));
 });

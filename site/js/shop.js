@@ -2,7 +2,10 @@
 'use strict';
 const SHOP_TABS = [['weapon', 'Vũ khí'], ['cloth', 'Trang phục'], ['jewel', 'Trang sức'], ['med', 'Dược phẩm'], ['horse', 'Ngựa'], ['sell', 'Bán đồ']];
 const POT_STACK = 10;
+const POT_BULK_STACK = 100;
 let shopTab = 'weapon';
+let shopBulkPotions = false;
+const shopPotionCount = () => shopBulkPotions ? POT_BULK_STACK : POT_STACK;
 
 function shopPrice(g) {
   if (g.g === 1) { const p = potionOf(g); return Math.round((g.price || (p ? p.price : 50)) * (1 + S.lvl / 25) * goldRateScale()); }
@@ -82,13 +85,14 @@ function potionInventoryModal(kind, tier) {
   });
 }
 function buyGoods(g) {
-  const price = shopPrice(g) * (g.g === 1 ? POT_STACK : 1);
+  const count = g.g === 1 ? shopPotionCount() : 1;
+  const price = shopPrice(g) * count;
   if (S.gold < price) { toast('Không đủ ngân lượng'); return; }
   if (g.g === 1) {
     const p = potionOf(g); if (!p) return;
     if (!(potStock(p.kind)[p.tier] > 0) && invUsed() >= invMax()) { toast('Hành trang đầy'); return; }
-    S.gold -= price; const st = potStock(p.kind); st[p.tier] = (st[p.tier] || 0) + POT_STACK; updatePotionButtons();
-    toast(`Mua ${POT_STACK} ${p.n}`); uiSfx('use');
+    S.gold -= price; const st = potStock(p.kind); st[p.tier] = (st[p.tier] || 0) + count; updatePotionButtons();
+    toast(`Mua ${count} ${p.n}`); uiSfx('use');
   } else {
     if (invUsed() >= invMax()) { toast('Hành trang đầy'); return; }
     const part = g.d >= 2 && g.d <= 9 ? sexPart(g.d, g.k) : g.k;
@@ -108,14 +112,20 @@ function shopModal() {
       <div class="btnrow"><button class="btn red" id="bSellBad">Bán đồ</button></div>
       <div class="invgrid">${S.inv.map(it => itemCell(it)).join('')}</div>`;
   } else {
+    const potionCount = shopPotionCount();
+    const potionToggle = shopTab === 'med' ? `<label class="ios-switch-row shop-potion-bulk">
+      <span>Mua gấp 10<small>${potionCount} bình mỗi lần</small></span>
+      <input type="checkbox" id="shopPotionBulk" aria-label="Mua gấp 10" ${shopBulkPotions ? 'checked' : ''}>
+      <span class="ios-switch" aria-hidden="true"></span>
+    </label>` : '';
     const list = J.shops[shopTab].items.filter(g => {
       if (!shopGoodForTab(shopTab, g)) return false;
       const it = goodsItem(g); return !it || sexOk(it);
     }).slice().sort((a, b) => (a.d - b.d) || (a.k - b.k) || (a.lvl - b.lvl));
-    body = `<div class="shoplist">${list.map((g, i) => {
+    body = `${potionToggle}<div class="shoplist">${list.map((g, i) => {
       if (g.g === 1) {
         const p = potionOf(g); if (!p) return '';
-        return `<button class="shoprow" data-i="${i}"><img src="${escRaw(p.ic || '')}" alt=""><span><b>${esc(p.n)}</b><small>Hồi ${fmt(p.total)} ${p.kind === 'life' ? 'sinh lực' : 'nội lực'} trong ${p.dur}s · còn ${potStock(p.kind)[p.tier] || 0}</small></span><em>${fmt(shopPrice(g) * POT_STACK)} / ${POT_STACK}</em></button>`;
+        return `<button class="shoprow" data-i="${i}"><img src="${escRaw(p.ic || '')}" alt=""><span><b>${esc(p.n)}</b><small>Hồi ${fmt(p.total)} ${p.kind === 'life' ? 'sinh lực' : 'nội lực'} trong ${p.dur}s · còn ${potStock(p.kind)[p.tier] || 0}</small></span><em>${fmt(shopPrice(g) * potionCount)} / ${potionCount}</em></button>`;
       }
       const it = goodsItem(g); if (!it) return '';
       const own = shopTab === 'weapon' && f && weaponCode({ weapon: it }) === f.wcode;
@@ -127,6 +137,7 @@ function shopModal() {
     <div class="dtabs">${tabs.map(([k, n]) => `<button data-t="${k}" class="${k === shopTab ? 'on' : ''}">${n}</button>`).join('')}</div>${body}`, () => {
     document.querySelectorAll('#mBody .dtabs button').forEach(b => b.onclick = () => { shopTab = b.dataset.t; shopModal(); });
     document.querySelectorAll('#mBody .shoprow').forEach(b => b.onclick = () => buyGoods(R.shopList[+b.dataset.i]));
+    const potionBulk = $('#shopPotionBulk'); if (potionBulk) potionBulk.onchange = e => { shopBulkPotions = e.target.checked; shopModal(); };
     const sb = $('#bSellBad'); if (sb) sb.onclick = () => sellChoiceModal(() => { shopTab = 'sell'; shopModal(); });
     document.querySelectorAll('.mbox .invgrid .it').forEach(b => b.onclick = () => { const it = findItem(b.dataset.uid); if (it) { sell(it); shopTab = 'sell'; shopModal(); } });
   });

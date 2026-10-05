@@ -203,7 +203,10 @@ function calc(eq) {
     }
   }
   P.actives = [];
-  for (const id in S.sk) { const s = SK[id]; if (S.sk[id] && isAttack(s) && skillWeaponOk(s, eq)) P.actives.push(activeInfo(P, s, lvOf(id))); }
+  for (const id in S.sk) {
+    const s = SK[id];
+    if (S.sk[id] && isAttack(s) && skillWeaponOk(s, eq) && (!isTrapSk(s) || (S.mainLock && +S.main === +id))) P.actives.push(activeInfo(P, s, lvOf(id)));
+  }
   P.basic = basicAttack(P);
   // noi luc: chieu ton nhieu hon (hoi noi luc + thuoc tu uong) chi dung duoc mot phan thoi gian, con lai danh thuong
   const income = P.manaRegen + manaPotRate(lv);
@@ -228,12 +231,25 @@ function skillTargets(s) {
 }
 // Các chiêu đa liên kích của Thiên Vương: sát thương bảng là tổng một lần thi triển.
 const SKILL_STRIKES = { 30: 2, 35: 3, 41: 4, 323: 5, 325: 3 };
+// Đường Môn đặt bẫy trên mặt đất; không tính bẫy như chiêu đánh trực tiếp trừ khi người chơi khóa chọn.
+const isTrapSk = s => !!s && /bẫy/i.test(s.d || '');
+// Huyền Nhất Vô Tượng: bảng sát thương lôi được dùng ở cấp 16 của Nhân Kiếm Hợp Nhất.
+const XUANYI_TAB = Array.from({ length: 20 }, (_, i) => [4 + 7 * (i + 1), 0, 296 + 59 * (i + 1)]);
 /* Đòn kỹ năng phụ cấp 11 theo sự kiện skill_flyevent / skill_collideevent. */
 const SKILL_EVENT_BONUS = {
+  357: { n: 'Long Chiến Vu Dã', k: 1, el: 'fire', max: 2 },
   302: { n: 'Truy Tinh Trục Điện', k: 0.15, el: 'poison', max: 8 },
+  // Thiên Ngoại Lưu Tinh gọi Nghiệp Hỏa Phần Thành (m170) từ cấp 11: 30% cơ hội, tối đa 3 mục tiêu.
+  362: { n: 'Nghiệp Hỏa Phần Thành', k: 1, el: 'fire', chance: 0.3, max: 3 },
   339: { n: 'Ngân Đao Xạ Nguyệt', k: 0.8, el: 'phys', max: 3 },
   336: { n: 'Băng Tâm Tuyết Liên', k: 0.25, el: 'cold', max: 3 },
   337: { n: 'Phong Tuyết Băng Thiên', k: 0.35, el: 'cold', max: 3 },
+  328: { n: 'Ngọc Tuyền Tẩy Trần', k: 0.35, el: 'phys', max: 3 },
+  380: { n: 'Kim Đỉnh Phật Quang', k: 0.35, el: 'cold', max: 4, rays: L => clamp(1 + Math.floor((L - 11) / 3), 1, 4) },
+  372: { n: 'Khiếu Phong Tam Liên Kích', k: 0.35, el: 'light', max: 3 },
+  375: { n: 'Bình Địa Hám Lôi', k: 0.35, el: 'light', max: 3 },
+  368: { n: 'Thái Cực Kiếm Ý', k: 0, el: 'light', max: 3, stun: 30,
+    at16: { n: 'Huyền Nhất Vô Tượng', el: 'light', max: 3, tab: { lightingdamage_v: XUANYI_TAB } } },
 };
 const skillEventLevel = s => {
   if (!s || !SKILL_EVENT_BONUS[s.id]) return 0;
@@ -245,6 +261,28 @@ const skillEventLevel = s => {
   }
   return min;
 };
+const skillEventAtLevel = a => {
+  const event = a && SKILL_EVENT_BONUS[a.id];
+  return event && event.at16 && a.L >= 16 ? Object.assign({}, event, event.at16, { stun: event.stun }) : event;
+};
+function skillEventParts(P, a, event) {
+  if (event.tab) {
+    const source = Object.assign({}, SK[a.id], { phys: 0, aura: 0, attr: event.tab });
+    const p = activeInfo(P, source, Math.min(a.L, 20)).parts || {};
+    return { [event.el]: p[event.el] || 0 };
+  }
+  const parts = {};
+  if (event.k > 0) parts[event.el] = a.tot * event.k;
+  if (event.poison) parts.poison = (parts.poison || 0) + a.tot * event.poison;
+  return parts;
+}
+function skillEventExpected(P, a) {
+  const event = skillEventAtLevel(a); if (!event) return 0;
+  const parts = skillEventParts(P, a, event), total = Object.values(parts).reduce((sum, value) => sum + value, 0);
+  const ratio = event.tab ? total / Math.max(1, a.tot) : event.k + (event.poison || 0);
+  const max = event.rays ? event.rays(a.L) : event.max;
+  return ratio * (event.chance || 1) * Math.min(max, 2.2) / expectedHits(a);
+}
 /* Thong tin mot chieu tan cong: sat thuong trung binh truoc khang, tam, so muc tieu, hao noi luc */
 function activeInfo(P, s, L) {
   // norm (bac ky nang) chi nhan vao he so cua chinh chieu: % vu khi va sat thuong nguyen to goc cua chieu,
@@ -286,7 +324,7 @@ function activeInfo(P, s, L) {
   // DPS du kien: so muc tieu trung thuc te + thoi gian danh cua chieu can chien (khong dung so muc tieu danh nghia)
   // doc: ~25% sat thuong mat khi quai chet truoc khi het doc (POISON_EFF) -> tinh vao DPS du kien (chon chieu, luc chien)
   info.dps = (tot - (parts.poison || 0) * (1 - POISON_EFF) + (parts.phys || 0) * crit / 100 * (CRIT_MULT - 1)) * expectedHits(info) * rate * (info.melee ? MELEE_UPTIME : 1);   // chi mang chi nhan doi phan vat ly (giong heroHit)
-  if (ev) { const event = SKILL_EVENT_BONUS[s.id]; info.dps *= 1 + event.k * Math.min(event.max, 2.2) / expectedHits(info); }
+  if (ev) info.dps *= 1 + skillEventExpected(P, info);
   return info;
 }
 /* Chuan hoa chinh xac cua nguoi choi vat ly theo muc dung de can bang ky nang:
@@ -358,7 +396,7 @@ function autoSpendSkills() {
   while (S.skPts > 0) {
     const base = power(calc()); let best = null, bn = 0, bg = -Infinity;
     for (const id of f.skills) {
-      const s = SK[id]; if (!canLearn(s) || (isAttack(s) && !skillWeaponOk(s, S.eq))) continue;
+      const s = SK[id]; if (!canLearn(s) || isTrapSk(s) || (isAttack(s) && !skillWeaponOk(s, S.eq))) continue;
       // goi diem tinh ca diem cua cac cap sau (khong gioi han boi diem dang co): dan diem dan vao chieu moi cho toi khi no vuot chieu cu
       const cur = S.sk[id] || 0, room = Math.min(20, s.max - cur);
       for (const n of [...new Set([1, Math.min(5, room), room])]) {

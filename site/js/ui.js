@@ -1,7 +1,16 @@
 /* ======================= GIAO DIEN (5 the) ======================= */
 'use strict';
 let curTab = 'log', invDirty = true, tabEnterTimer = 0, modalEnterTimer = 0;
-function log(h) { if (R.quiet) return; R.logs.unshift(viMessage(h)); if (R.logs.length > 40) R.logs.pop(); R.logDirty = true; }
+const WORLD_CHAT_TIME_KEY = 'jxidle_chat_show_time';
+function worldChatTimeEnabled() {
+  try { return localStorage.getItem(WORLD_CHAT_TIME_KEY) !== 'false'; }
+  catch (_) { return true; }
+}
+function log(h) {
+  if (R.quiet) return;
+  R.logs.unshift(viMessage(h)); if (R.logs.length > 40) R.logs.pop(); R.logDirty = true;
+  if (typeof window.syncWorldChatSystem === 'function') window.syncWorldChatSystem(R.logs);
+}
 let toastT; function toast(t) { const el = $('#toast'); el.textContent = viMessage(t); el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 1800); }
 function modal(html, bind, locked) {
   const overlay = $('#modal'), opening = overlay.classList.contains('hidden');
@@ -65,17 +74,18 @@ function addItem(it, quiet, picked, keep) {
   return true;
 }
 /* So sanh bang luc chien that (tinh ca mon vu khi cua phai, khang, ...), khong chi chi so cua mon do */
-function equipGain(it) {
-  if (!reqOk(it)) return -1;
+function equipGain(it, currentPower = null, requirementsChecked = false) {
+  if (!requirementsChecked && !reqOk(it)) return -1;
   const eq = Object.assign({}, S.eq); eq[slotFor(it)] = it;
-  return power(calc(eq)) / Math.max(1, power(calc(S.eq))) - 1;
+  const basePower = currentPower == null ? power(calc(S.eq)) : currentPower;
+  return power(calc(eq)) / Math.max(1, basePower) - 1;
 }
 // tu mac chi doi vu khi cung loai voi mon vu khi cua phai (Con cho Thieu Lam, am khi cho Duong Mon...);
 // nguoi choi van mac tay duoc moi loai
-function betterThanEquipped(it) {
+function betterThanEquipped(it, currentPower = null, requirementsChecked = false) {
   const f = FAC[S.fac];
   if (DETAIL_SLOT[it.d] === 'weapon' && f && f.wcode >= 0 && weaponCode({ weapon: it }) !== f.wcode) return false;
-  return equipGain(it) > 0.01;
+  return equipGain(it, currentPower, requirementsChecked) > 0.01;
 }
 function equip(it, quiet) {
   if (!reqOk(it)) { if (!quiet) toast('Chưa mặc được: ' + reqProblems(it).join('; ')); return; }
@@ -121,11 +131,13 @@ function sellSingle(it) {
 function sell(it) { if (!S.inv.includes(it)) { closeModal(); return; }
   const result = sellSingle(it); if (!result.ok) { toast(result.msg); return; } closeModal(); refresh(); }
 function findItem(uid) { uid = +uid; return S.inv.find(i => i.uid === uid) || Object.values(S.eq).find(i => i && i.uid === uid) || (R.ground.find(d => d.it.uid === uid) || {}).it; }
-function itemCell(it, orderIndex = null) {
+function itemCell(it, orderIndex = null, currentPower = null) {
   if (!it) return '';
   const orderable = Number.isInteger(orderIndex);
   const frame = it.set && it.set.kind === 'gold' ? ' goldset' : it.set && it.set.kind === 'platina' ? ' platinaset' : !it.set && it.r === 1 ? ' magicitem' : '';
-  return `<button class="it${orderable ? ' inv-reorder-cell' : ''} r${it.r}${frame}${reqOk(it) ? '' : ' bad'}" data-uid="${it.uid}"${orderable ? ` data-inv-order="${orderIndex}"` : ''}${reqOk(it) ? '' : ` title="${esc('Chưa mặc được: ' + reqProblems(it).join('; '))}"`}>${it.ic ? `<img src="${escRaw(it.ic)}" alt="" draggable="false">` : ''}<i>${it.lvl}</i>${it.s >= 0 ? `<b class="s5" style="background:${SERIES_COL[it.s]}"></b>` : ''}${betterThanEquipped(it) && S.inv.includes(it) ? '<em>▲</em>' : ''}${it.locked ? '<u class="lk">🔒</u>' : ''}</button>`;
+  const eligible = reqOk(it), reqTitle = eligible ? '' : ` title="${esc('Chưa mặc được: ' + reqProblems(it).join('; '))}"`;
+  const better = orderable && eligible && betterThanEquipped(it, currentPower, true);
+  return `<button class="it${orderable ? ' inv-reorder-cell' : ''} r${it.r}${frame}${eligible ? '' : ' bad'}" data-uid="${it.uid}"${orderable ? ` data-inv-order="${orderIndex}"` : ''}${reqTitle}>${it.ic ? `<img src="${escRaw(it.ic)}" alt="" draggable="false">` : ''}<i>${it.lvl}</i>${it.s >= 0 ? `<b class="s5" style="background:${SERIES_COL[it.s]}"></b>` : ''}${better ? '<em>▲</em>' : ''}${it.locked ? '<u class="lk">🔒</u>' : ''}</button>`;
 }
 
 let invOrderSourceUid = 0, invOrderSuppressClickUntil = 0, invOrderTouch = null, invOrderTouchEventsBound = false;
@@ -484,10 +496,11 @@ function renderInv() {
   const potionCells = J.potions.filter(p => (potStock(p.kind)[p.tier] || 0) > 0)
     .map(p => `<button type="button" class="it potion-inv-cell" data-potion-kind="${p.kind}" data-potion-tier="${p.tier}" title="${esc(p.n)} · còn ${potStock(p.kind)[p.tier]} bình" aria-label="${esc(p.n)}, còn ${potStock(p.kind)[p.tier]} bình"><img src="${escRaw(p.ic || '')}" alt="" draggable="false"><i>${potStock(p.kind)[p.tier]}</i></button>`).join('');
   const onGround = R.ground.length, match = R.ground.filter(d => lootMatch(d.it)).length;
+  const currentPower = S.inv.length ? (R.dirty || !R.P ? power(calc(S.eq)) : power(R.P)) : 0;
   $('#t-inv').innerHTML = `<div class="invbar"><span>${invUsed()}/${invMax()}</span><span class="sp"></span>
     <button class="btn sm" id="bExpandInv" ${invExpansionCount() >= INV_EXPANSION_MAX ? 'disabled' : ''}>${invExpansionCount() >= INV_EXPANSION_MAX ? 'Túi đã tối đa' : `Mở rộng túi · ${fmt(inventoryExpansionCost())} lượng`}</button>
     <button class="btn sm" id="bStash">Kho chung</button><button class="btn sm" id="bBest">Mặc đồ tốt</button><button class="btn sm red" id="bSellAll">Bán đồ</button></div>
-    <div class="dim small inv-reorder-hint">Kéo món lên ô khác để đổi chỗ; kéo bình sang Bán đồ hoặc Kho chung · điện thoại: nhấn giữ rồi kéo</div><div class="invgrid">${potionCells}${S.inv.map((it, i) => itemCell(it, i)).join('')}</div>
+    <div class="dim small inv-reorder-hint">Kéo món lên ô khác để đổi chỗ; kéo bình sang Bán đồ hoặc Kho chung · điện thoại: nhấn giữ rồi kéo</div><div class="invgrid">${potionCells}${S.inv.map((it, i) => itemCell(it, i, currentPower)).join('')}</div>
     <h3>Đồ rơi trên đất <small>${onGround} món · ${match} khớp bộ lọc</small></h3>
     <div class="card lootf">
       <div class="row">Độ hiếm từ <select id="fRar">${rar}</select> · cấp đồ từ <select id="fLvl">${lv}</select></div>
@@ -608,7 +621,7 @@ function renderMore() {
   const speedNow = (typeof gameSpeed === 'function') ? gameSpeed() : 1;
   $('#t-more').innerHTML = `
     <h3>Nhân vật</h3><div class="card lootf">
-      <div class="row">Tên <input id="cName" maxlength="16" value="${esc(S.name || '')}" style="flex:1"></div>
+      <div class="row">Tên <input id="cName" maxlength="24" value="${esc(S.name || '')}" style="flex:1"></div>
       <div class="row">Giới tính <select id="cSex"><option value="0" ${S.sex ? '' : 'selected'}>Nam</option><option value="1" ${S.sex ? 'selected' : ''}>Nữ</option></select></div>
       <div class="btnrow"><button class="btn" id="bName">Lưu tên và giới tính</button></div>
       <small class="dim">Trang bị không hợp giới tính sẽ tự tháo.</small></div>
@@ -632,6 +645,8 @@ function renderMore() {
       <small class="dim">Tay cầm: cần/D-pad di chuyển · A/B/X/Y dùng chiêu · LB/RB uống thuốc · Start tạm dừng. Esc đóng hộp thoại.</small></div>
     <h3>Điều khiển & Hiển thị</h3><div class="card setting-switches"><label class="ios-switch-row"><span>Joystick cố định (tắt để kéo theo ngón tay)</span><input type="checkbox" id="cJoy" ${joyFixed() ? 'checked' : ''}><span class="ios-switch" aria-hidden="true"></span></label>
       <label class="ios-switch-row"><span>Hiển thị trang bị trên nhân vật (mũ, áo, vũ khí, ngựa)</span><input type="checkbox" id="cJxLook" ${S.jxLook !== false ? 'checked' : ''}><span class="ios-switch" aria-hidden="true"></span></label>
+      <label class="ios-switch-row"><span>Hiện thời gian trong khung chat thế giới</span><input type="checkbox" id="cChatTime" ${worldChatTimeEnabled() ? 'checked' : ''}><span class="ios-switch" aria-hidden="true"></span></label>
+      <label class="ios-switch-row"><span>Hiệu ứng sáng viền đồ Hoàng Kim / Bạch Kim trong hành trang</span><input type="checkbox" id="cInvBorderGlow" ${uiPrefs().invBorderGlow ? 'checked' : ''}><span class="ios-switch" aria-hidden="true"></span></label>
       <label class="ios-switch-row"><span>Giảm hiệu ứng để game mượt hơn</span><input type="checkbox" id="cLowFx" ${giamHieuUng() ? 'checked' : ''}><span class="ios-switch" aria-hidden="true"></span></label></div>
     <div class="btnrow"><button class="btn" id="bSwitch">Đổi nhân vật / slot</button><button class="btn red" id="bReset">Xóa nhân vật</button></div>`;
   $('#bName').onclick = () => {
@@ -652,6 +667,11 @@ function renderMore() {
   $('#mVol').oninput = setMusicVolume; $('#mVol').onchange = e => { setMusicVolume(e); save(); };
   $('#cJoy').onchange = e => { S.joy = e.target.checked ? 'fixed' : 'float'; save(); };
   $('#cJxLook').onchange = e => { S.jxLook = e.target.checked; R.dirty = true; recalc(); save(); toast(e.target.checked ? 'Hiển thị trang bị trên nhân vật' : 'Dùng ngoại hình môn phái'); };
+  $('#cChatTime').onchange = e => {
+    try { localStorage.setItem(WORLD_CHAT_TIME_KEY, String(e.target.checked)); } catch (_) { /* Lựa chọn chỉ áp dụng trong phiên này. */ }
+    document.dispatchEvent(new CustomEvent('world-chat-time-visibility-change', { detail: { visible: e.target.checked } }));
+  };
+  $('#cInvBorderGlow').onchange = e => setUiPref({ invBorderGlow: e.target.checked });
   $('#cLowFx').onchange = e => { S.lowFx = e.target.checked ? 1 : 0; save(); };
   $('#sDiff').onchange = e => { S.diff = +e.target.value; R.enemies = []; R.spawnT = 0.3; save(); toast('Độ khó: ' + diffOf().n); renderMore(); };
   $('#bStashM').onclick = () => stashModal(); $('#bTut').onclick = () => tutorialModal(0); $('#bCodex').onclick = () => codexModal(); $('#bSug').onclick = suggestModal;
@@ -741,7 +761,7 @@ function slotMenu(confirmDel) {
 }
 function pickFaction() {
   const cards = FACTIONS.map(f => `<button data-f="${f.key}" style="--c:${SERIES_COL[f.series]}"><img src="${(W.hero[f.key] || {}).img || ''}" alt=""><b>${esc(f.n)}</b><small>hệ ${SERIES[f.series]}</small><i class="s5b" style="background-image:url('ui/s${f.series}.png')"></i></button>`).join('');
-  modal(`<h3>Chọn môn phái</h3><p class="desc">Mỗi phái thuộc một hệ ngũ hành. Kim khắc Mộc, Mộc khắc Thổ, Thổ khắc Thủy, Thủy khắc Hỏa, Hỏa khắc Kim.</p><div class="card lootf"><div class="row">Tên nhân vật <input id="pfName" maxlength="16" placeholder="Tân thủ" style="flex:1"></div><div class="row">Giới tính <select id="pfSex"><option value="">Theo phái (Nga My / Thúy Yên là nữ)</option><option value="0">Nam</option><option value="1">Nữ</option></select></div><div class="row">Thử thách <select id="pfChal">${CHALLENGES.map(c => `<option value="${c.k}">${c.n} — ${c.d}</option>`).join('')}</select></div><small class="dim">Thử thách không đổi được sau khi tạo. Để trống thì lấy tên phái. Mặc định Nga My / Thúy Yên là nữ. Đổi lại được ở thẻ Khác.</small></div><div class="facpick">${cards}</div>`, () => {
+  modal(`<h3>Chọn môn phái</h3><p class="desc">Mỗi phái thuộc một hệ ngũ hành. Kim khắc Mộc, Mộc khắc Thổ, Thổ khắc Thủy, Thủy khắc Hỏa, Hỏa khắc Kim.</p><div class="card lootf"><div class="row">Tên nhân vật <input id="pfName" maxlength="24" placeholder="Tân thủ" style="flex:1"></div><div class="row">Giới tính <select id="pfSex"><option value="">Theo phái (Nga My / Thúy Yên là nữ)</option><option value="0">Nam</option><option value="1">Nữ</option></select></div><div class="row">Thử thách <select id="pfChal">${CHALLENGES.map(c => `<option value="${c.k}">${c.n} — ${c.d}</option>`).join('')}</select></div><small class="dim">Thử thách không đổi được sau khi tạo. Để trống thì lấy tên phái. Mặc định Nga My / Thúy Yên là nữ. Đổi lại được ở thẻ Khác.</small></div><div class="facpick">${cards}</div>`, () => {
     document.querySelectorAll('.facpick button').forEach(b => b.onclick = () => { const ne = $('#pfName'), sx = $('#pfSex'); startFaction(b.dataset.f, ne ? ne.value : '', (sx && sx.value !== '') ? +sx.value : null, ($('#pfChal') || {}).value || ''); });   // de trong gioi tinh = theo mac dinh cua phai
   }, true);
 }
@@ -756,7 +776,7 @@ function startFaction(key, tenNguoi, gioiTinh, chal) {
   if (S.chal === 'nopot') { S.potOff = true; S.autoHpPotion = false; S.autoMpPotion = false; }
   // A: nguoi choi duoc tu dat ten va chon gioi tinh; de trong / khong truyen thi lay mac dinh theo phai
   S.sex = (gioiTinh === 0 || gioiTinh === 1) ? gioiTinh : (['emei', 'cuiyan'].includes(key) ? 1 : 0); S.sexSet = 1;   // sexSet: migrate() khong ghi de ve mac dinh cua phai
-  S.name = (typeof tenNguoi === 'string' && tenNguoi.trim()) ? tenNguoi.trim().slice(0, 16) : f.n;
+  S.name = (typeof tenNguoi === 'string' && tenNguoi.trim()) ? tenNguoi.trim().slice(0, 24) : f.n;
   if (f.starter) { S.sk[f.starter] = 1; S.skPts = Math.max(0, S.skPts - 1); S.main = f.starter; }
   starterGear();
   R.dirty = true; recalc(); R.life = R.P.life; R.mana = R.P.mana;
